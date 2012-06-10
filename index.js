@@ -1,7 +1,7 @@
 function pixel(x,y,colour){
 	this.x = x ? x : 0;
 	this.y = y ? y : 0;
-	this.colour = colour ? colour : 0x0099FF;
+	this.colour = colour ? colour : "#0099FF";
 	
 }
 var view = new function(){
@@ -20,17 +20,17 @@ var view = new function(){
 	this.draw = function draw(){	
 
 		// Draw grid: vertical lines
-		for (i=0.5;i<view.canvas.width-0.5;i+=view.scale){
+		for (i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
 			view.ctx.beginPath();
-			view.ctx.moveTo(i,0.5);
+			view.ctx.moveTo(i,-0.5);
 			view.ctx.lineTo(i,view.canvas.height-0.5);
 			view.ctx.closePath();
 			view.ctx.stroke();
 		}
 		// Draw grid: horizontal lines
-		for (j=0.5;j<view.canvas.height-0.5;j+=view.scale){
+		for (j=-0.5;j<view.canvas.height-0.5;j+=view.scale){
 			view.ctx.beginPath();
-			view.ctx.moveTo(0.5,j);
+			view.ctx.moveTo(-0.5,j);
 			view.ctx.lineTo(view.canvas.width-0.5,j);
 			view.ctx.closePath();
 			view.ctx.stroke();
@@ -40,12 +40,26 @@ var view = new function(){
 		if (image && image.map){
 			for (k=0;k<image.map.length;k++){
 				view.ctx.fillStyle = image.map[k].colour;
-				view.ctx.fillRect(image.origin.x*view.scale + image.map[k].x*view.scale + 1,
-					image.origin.y*view.scale + image.map[k].y*view.scale + 1,
+				view.ctx.fillRect((image.origin.x + image.map[k].x)*view.scale,
+					(image.origin.y + image.map[k].y)*view.scale,
 					view.scale - 1,
 					view.scale - 1)
 			}
 		}
+		
+		// Draw palette
+		this.palette = {};
+		this.palette.x = 50;
+		this.palette.y = 50;
+		this.palette.width = 200;
+		this.palette.height = 400;
+		this.palette.bgcolour = "#FFFFFF";
+		view.ctx.fillStyle = "#FFFFFF";
+		view.ctx.fillRect(50,50,200,400);
+		view.ctx.strokeStyle = "#000000";
+		view.ctx.strokeRect(49.5,49.5,200,400);
+		
+		
 	}
 }
 view.draw();
@@ -81,13 +95,10 @@ $(document).mousedown(function(event){
 	pixelX = Math.floor(clickX/view.scale)*view.scale;
 	pixelY = Math.floor(clickY/view.scale)*view.scale;
 	
-	// Draw pixel inside the grid bounds (1 pixel inside).
-	view.ctx.fillStyle = "#0099FF";
-	view.ctx.fillRect(
-		pixelX+1,
-		pixelY+1,
-		view.scale-1,
-		view.scale-1);
+	// If we are inside the palette box...
+	
+	
+	
 		
 	// If no pixels have been drawn, this is the origin.
 	if (!image.map[0]){
@@ -99,7 +110,15 @@ $(document).mousedown(function(event){
 	image.map.push(new pixel(
 		Math.floor((clickX-(image.origin.x*view.scale))/view.scale),
 		Math.floor((clickY-(image.origin.y*view.scale))/view.scale),
-		0x0099FF));	
+		"#0099FF"));
+	
+	// Draw pixel inside the grid bounds (1 pixel inside).
+	view.ctx.fillStyle = "#0099FF";
+	view.ctx.fillRect(
+		pixelX,
+		pixelY,
+		view.scale-1,
+		view.scale-1);	
 });
 
 $(window).resize(function(){
@@ -107,7 +126,5 @@ $(window).resize(function(){
 	view.height = $(window).height();
 	view.canvas.width = view.width-1;
 	view.canvas.height = view.height-5;
-	view.ctx.strokeStyle="#888888";
-	view.ctx.fillStyle="#0099FF";
 	view.draw();
 });
