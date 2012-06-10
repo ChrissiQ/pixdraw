@@ -1,7 +1,7 @@
 function pixel(x,y,colour){
 	this.x = x ? x : 0;
 	this.y = y ? y : 0;
-	this.colour = colour ? colour : 0x000000;
+	this.colour = colour ? colour : 0x0099FF;
 	
 }
 var view = new function(){
@@ -40,8 +40,8 @@ var view = new function(){
 		if (image && image.map){
 			for (k=0;k<image.map.length;k++){
 				view.ctx.fillStyle = image.map[k].colour;
-				view.ctx.fillRect(image.origin.x + image.map[k].x*view.scale + 1,
-					image.origin.y + image.map[k].y*view.scale + 1,
+				view.ctx.fillRect(image.origin.x*view.scale + image.map[k].x*view.scale + 1,
+					image.origin.y*view.scale + image.map[k].y*view.scale + 1,
 					view.scale - 1,
 					view.scale - 1)
 			}
@@ -91,14 +91,14 @@ $(document).mousedown(function(event){
 		
 	// If no pixels have been drawn, this is the origin.
 	if (!image.map[0]){
-		image.origin.x = pixelX;
-		image.origin.y = pixelY;
+		image.origin.x = Math.floor(pixelX/view.scale);
+		image.origin.y = Math.floor(pixelY/view.scale);
 	}
 	
 	// Add pixel to the map.
 	image.map.push(new pixel(
-		Math.floor((clickX-image.origin.x)/view.scale),
-		Math.floor((clickY-image.origin.y)/view.scale),
+		Math.floor((clickX-(image.origin.x*view.scale))/view.scale),
+		Math.floor((clickY-(image.origin.y*view.scale))/view.scale),
 		0x0099FF));	
 });
 
@@ -108,5 +108,6 @@ $(window).resize(function(){
 	view.canvas.width = view.width-1;
 	view.canvas.height = view.height-5;
 	view.ctx.strokeStyle="#888888";
+	view.ctx.fillStyle="#0099FF";
 	view.draw();
 });
