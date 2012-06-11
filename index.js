@@ -2,8 +2,74 @@ function pixel(x,y,colour){
 	this.x = x ? x : 0;
 	this.y = y ? y : 0;
 	this.colour = colour ? colour : "#0099FF";
-	
 }
+
+function box(x,y,width,height,colour){
+	this.x = x ? x : 0;
+	this.y = y ? y : 0;
+	this.width = width ? width : 0;
+	this.height = height ? height : 0;
+	this.colour = colour ? colour : "#FFFFFF";
+}
+
+// Assumes two boxes, or item1 a coordinate and item2 a box.
+// Takes a item1 and compares it to an item with x/y and width/height.
+// Checks if item1 is inside item2.
+// This is sugar - makes the rest of the code more readable.
+function isIn(item1,item2){
+	
+	// If item1 is a box (if it has width and height).
+	if (item1.x && item1.y && item1.width && item1.height){
+		
+				// If the top left corner is inside
+		if ( 	(	item1.x > item2.x && 
+					item1.y > item2.y &&
+					item1.x < item2.x + item2.width && 
+					item1.y < item2.y + item2.height) ||
+		
+				// Or the top right corner is inside
+				(	item1.x + item1.width > item2.x && 
+					item1.y > item2.y &&
+					item1.x + item1.width < item2.x + item2.width &&
+					item1.y < item2.y + item2.height) ||
+					
+				// Or the bottom left corner is inside
+				(	item1.x > item2.x && 
+					item1.y + item1.height > item2.y &&
+					item1.x < item2.x + item2.width &&
+					item1.y + item1.height < item2.y + item2.height) ||
+					
+				// Or the bottom right corner is inside
+				(	item1.x + item1.width > item2.x &&
+					item1.y + item1.height > item2.y &&
+					item1.x + item1.width < item2.x + item2.width &&
+					item1.y + item1.height < item2.y + item2.height)){
+					
+			return true;
+		} else {
+			return false;
+		}
+		
+	// If item1 is not a box, but a coordinate.
+	} else if (item1.x && item1.y){
+	
+		// Check whether the coordinate is inside the item2.
+		if (	item1.x > item2.x && 
+				item1.y > item2.y && 
+				item1.x < item2.x + item2.width &&
+				item1.y < item2.y + item2.height){
+			return true;
+		} else {
+			return false;
+		}
+	
+	// If it's neither, oops!
+	} else {
+		return null;
+	}
+}
+
+
 var view = new function(){
 	this.scale = 25;
 	this.width = $(window).width();
@@ -48,18 +114,65 @@ var view = new function(){
 		}
 		
 		// Draw palette
+		
+		// Vital stats.
 		this.palette = {};
 		this.palette.x = 50;
 		this.palette.y = 50;
 		this.palette.width = 200;
 		this.palette.height = 400;
 		this.palette.bgcolour = "#FFFFFF";
-		view.ctx.fillStyle = "#FFFFFF";
-		view.ctx.fillRect(50,50,200,400);
+		this.palette.currentColour = "#0099FF";
+		this.palette.tiles = new Array;
+		this.palette.tiles.push(new box(
+			this.palette.x + 5,
+			this.palette.y + 5,
+			25,
+			25,
+			"#FF0000"));
+		this.palette.tiles.push(new box(
+			this.palette.x + 5,
+			this.palette.y + 35,
+			25,
+			25,
+			"#0099FF"));
+		
+		// Draw background.
+		view.ctx.fillStyle = this.palette.bgcolour;
+		view.ctx.fillRect(
+			this.palette.x,
+			this.palette.y,
+			this.palette.width,
+			this.palette.height);
+		
+		// Draw black border.	
 		view.ctx.strokeStyle = "#000000";
-		view.ctx.strokeRect(49.5,49.5,200,400);
+		view.ctx.strokeRect(
+			this.palette.x-0.5,
+			this.palette.y-0.5,
+			this.palette.width,
+			this.palette.height);
 		
 		
+		// Draw palette tiles.
+		
+		for (m=0;m<view.palette.tiles.length;m++){
+			currentTile = view.palette.tiles[m];
+			// Draw rectangular bound.
+			view.ctx.strokeStyle = "#000000";
+			view.ctx.strokeRect(
+				currentTile.x + 0.5,
+				currentTile.y + 0.5,
+				currentTile.width,
+				currentTile.height);
+			// Fill with shade.
+			view.ctx.fillStyle = currentTile.colour;
+			view.ctx.fillRect(
+				currentTile.x +1,
+				currentTile.y + 1,
+				currentTile.width-1,
+				currentTile.height-1);	
+		}	
 	}
 }
 view.draw();
@@ -88,37 +201,52 @@ $(document).bind('mousewheel', function(event, delta, deltaX, deltaY) {
 $(document).mousedown(function(event){
 
 	// Click event location.
-	clickX = event.clientX;
-	clickY = event.clientY;
+	var click = {};
+	click.x = event.clientX;
+	click.y = event.clientY;
 	
 	// Top left corner of pixel square.
-	pixelX = Math.floor(clickX/view.scale)*view.scale;
-	pixelY = Math.floor(clickY/view.scale)*view.scale;
+	var pix = {};
+	pix.x = Math.floor(click.x/view.scale)*view.scale;
+	pix.y = Math.floor(click.y/view.scale)*view.scale;
+	pix.width = view.scale;
+	pix.height = view.scale;
 	
 	// If we are inside the palette box...
 	
-	
+	if (isIn(pix,view.palette)){
+		
+		// If we are inside the red box!
+		for (i=0;i<view.palette.tiles.length;i++){
+			if (isIn(click,view.palette.tiles[i])){
+				view.palette.currentColour = view.palette.tiles[i].colour;
+			}
+		}
+		
+	} else {
 	
 		
-	// If no pixels have been drawn, this is the origin.
-	if (!image.map[0]){
-		image.origin.x = Math.floor(pixelX/view.scale);
-		image.origin.y = Math.floor(pixelY/view.scale);
+		// If no pixels have been drawn, this is the origin.
+		if (!image.map[0]){
+			image.origin.x = Math.floor(pix.x/view.scale);
+			image.origin.y = Math.floor(pix.y/view.scale);
+		}
+	
+		// Add pixel to the map.
+		image.map.push(new pixel(
+			Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
+			Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
+			view.palette.currentColour));
+		
+		// Draw pixel inside the grid bounds (1 pixel inside).
+		view.ctx.fillStyle = view.palette.currentColour;
+		view.ctx.fillRect(
+			pix.x,
+			pix.y,
+			view.scale-1,
+			view.scale-1);	
+	
 	}
-	
-	// Add pixel to the map.
-	image.map.push(new pixel(
-		Math.floor((clickX-(image.origin.x*view.scale))/view.scale),
-		Math.floor((clickY-(image.origin.y*view.scale))/view.scale),
-		"#0099FF"));
-	
-	// Draw pixel inside the grid bounds (1 pixel inside).
-	view.ctx.fillStyle = "#0099FF";
-	view.ctx.fillRect(
-		pixelX,
-		pixelY,
-		view.scale-1,
-		view.scale-1);	
 });
 
 $(window).resize(function(){
