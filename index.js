@@ -1,5 +1,5 @@
 var mouseDown;
-var mouseButton;
+var mouseButton; // 1 is left, 3 is right (2 is middle).
 
 function componentToHex(c) {
     var hex = c.toString(16);
@@ -10,83 +10,11 @@ function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-function pixel(x,y,colour){
-	this.x = x ? x : 0;
-	this.y = y ? y : 0;
-	this.colour = colour ? colour : "#0099FF";
-}
-
-function box(x,y,width,height,colour){
-	this.x = x ? x : 0;
-	this.y = y ? y : 0;
-	this.width = width ? width : 0;
-	this.height = height ? height : 0;
-	this.colour = colour ? colour : "#FFFFFF";
-}
-
-// Assumes two boxes, or item1 a coordinate and item2 a box.
-// Takes a item1 and compares it to an item with x/y and width/height.
-// Checks if item1 is inside item2.
-// This is sugar - makes the rest of the code more readable.
-function isIn(item1,item2){
-	
-	// If item1 is a box (if it has width and height).
-	if (item1.x && item1.y && item1.width && item1.height){
-		
-				// If the top left corner is inside
-		if ( 	(	item1.x > item2.x && 
-					item1.y > item2.y &&
-					item1.x < item2.x + item2.width && 
-					item1.y < item2.y + item2.height) ||
-		
-				// Or the top right corner is inside
-				(	item1.x + item1.width > item2.x && 
-					item1.y > item2.y &&
-					item1.x + item1.width < item2.x + item2.width &&
-					item1.y < item2.y + item2.height) ||
-					
-				// Or the bottom left corner is inside
-				(	item1.x > item2.x && 
-					item1.y + item1.height > item2.y &&
-					item1.x < item2.x + item2.width &&
-					item1.y + item1.height < item2.y + item2.height) ||
-					
-				// Or the bottom right corner is inside
-				(	item1.x + item1.width > item2.x &&
-					item1.y + item1.height > item2.y &&
-					item1.x + item1.width < item2.x + item2.width &&
-					item1.y + item1.height < item2.y + item2.height)){
-					
-			return true;
-		} else {
-			return false;
-		}
-		
-	// If item1 is not a box, but a coordinate.
-	} else if (item1.x && item1.y){
-	
-		// Check whether the coordinate is inside the item2.
-		if (	item1.x > item2.x && 
-				item1.y > item2.y && 
-				item1.x < item2.x + item2.width &&
-				item1.y < item2.y + item2.height){
-			return true;
-		} else {
-			return false;
-		}
-	
-	// If it's neither, oops!
-	} else {
-		return null;
-	}
-}
-
-
 var view = new function(){
 	this.scale = 25;
+	this.canvas = document.getElementById('pixdraw');
 	this.width = $(window).width();
 	this.height = $(window).height();
-	this.canvas = document.getElementById('pixdraw');
 	this.canvas.width = this.width-1;
 	this.canvas.height = this.height-5;
 	this.ctx = this.canvas.getContext('2d');
@@ -104,23 +32,9 @@ var view = new function(){
 	this.palette.y = 49;
 	$(this.palette).css('top', this.palette.x);
 	$(this.palette).css('left', this.palette.y);
-	this.palette.backColour = "#FFFFFF";
-	this.palette.foreColour = "#0000FF";
-	this.palette.tiles = new Array;
+	this.palette.backColour = "rgba(0,0,0,0.2)";
+	this.palette.foreColour = "rgba(255,0,0,0.2)";
 	this.palette.mode = "draw";
-	this.palette.tiles.push(new box(
-		5,
-		5,
-		50,
-		50,
-		"#FF0000"));
-	this.palette.tiles.push(new box(
-		5,
-		55,
-		50,
-		50,
-		"#0099FF"));
-	
 	this.draw = function draw(){	
 
 		// Draw grid: vertical lines
@@ -151,6 +65,58 @@ var view = new function(){
 			}
 		}
 	}
+	
+	this.drawClick = function drawClick(event){
+		var click = { x: event.clientX, y: event.clientY };
+		// Top left corner of pixel square.
+		var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
+					y: Math.floor(click.y/view.scale)*view.scale};
+
+		if (view.palette.mode === "draw"){
+
+			// If no pixels have been drawn, this is the origin.
+			if (!image.map[0]){
+				image.origin.x = Math.floor(pix.x/view.scale);
+				image.origin.y = Math.floor(pix.y/view.scale);
+			}
+
+			var coord = {	x: Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
+							y: Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
+							exists: false};
+			
+			if (mouseButton === 1){
+				pix.colour = view.palette.foreColour;
+			} else if (mouseButton === 3){
+				pix.colour = view.palette.backColour;
+			}
+
+			// Add pixel to the map.
+			for (i=0;i<image.map.length;i++){
+				if (image.map[i].x == coord.x && image.map[i].y == coord.y){
+					// If the new pixel is a different colour than the old one, remove the old one.
+					if (image.map[i].colour != pix.colour){
+						image.map.splice(i,1);
+					} else {
+						coord.exists = true;
+					}
+				}
+			}
+			if (coord.exists == false){
+				image.map.push({ x: coord.x, y: coord.y, colour: pix.colour });
+
+				// Draw pixel inside the grid bounds (1 pixel inside).
+				view.ctx.fillStyle = pix.colour;
+				view.ctx.fillRect(
+					pix.x,
+					pix.y,
+					view.scale-1,
+					view.scale-1);
+			}
+		} else if (view.palette.mode === "move"){
+	
+		}
+
+	}	
 }
 view.draw();
 
@@ -171,6 +137,7 @@ $("#pixdraw").bind('mousewheel', function(event, delta) {
 	view.draw();
 });
 
+// This enables you to draw in the background colour without the context menu getting in the way when you right-click.
 $("#pixdraw").bind("contextmenu", function(e) {
     return false;
 });
@@ -179,45 +146,7 @@ $("#pixdraw").bind("contextmenu", function(e) {
 $('#pixdraw').mousedown(function(event){
 	mouseDown = true;
 	mouseButton = event.which;
-	// Click event location.
-	var click = {};
-	click.x = event.clientX;
-	click.y = event.clientY;
-	// Top left corner of pixel square.
-	var pix = {};
-	pix.x = Math.floor(click.x/view.scale)*view.scale;
-	pix.y = Math.floor(click.y/view.scale)*view.scale;
-
-	if (view.palette.mode === "draw"){
-
-		// If no pixels have been drawn, this is the origin.
-		if (!image.map[0]){
-			image.origin.x = Math.floor(pix.x/view.scale);
-			image.origin.y = Math.floor(pix.y/view.scale);
-		}
-		if (mouseButton === 1){
-			pix.colour = view.palette.foreColour;
-		} else if (mouseButton === 3){
-			pix.colour = view.palette.backColour;
-		}
-
-		// Add pixel to the map.
-		image.map.push(new pixel(
-			Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-			Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-			pix.colour));
-
-		// Draw pixel inside the grid bounds (1 pixel inside).
-		view.ctx.fillStyle = pix.colour;
-		view.ctx.fillRect(
-			pix.x,
-			pix.y,
-			view.scale-1,
-			view.scale-1);
-	} else if (view.palette.mode === "move"){
-	
-	}
-
+	view.drawClick(event);
 });
 
 $('#pixdraw').mouseup(function(){
@@ -227,45 +156,7 @@ $('#pixdraw').mouseup(function(){
 
 $('#pixdraw').mousemove(function(event){
 	if (mouseDown === true){
-		// Click event location.
-		var click = {};
-		click.x = event.clientX;
-		click.y = event.clientY;
-		// Top left corner of pixel square.
-		var pix = {};
-		pix.x = Math.floor(click.x/view.scale)*view.scale;
-		pix.y = Math.floor(click.y/view.scale)*view.scale;
-
-		if (view.palette.mode === "draw"){
-
-			// If no pixels have been drawn, this is the origin.
-			if (!image.map[0]){
-				image.origin.x = Math.floor(pix.x/view.scale);
-				image.origin.y = Math.floor(pix.y/view.scale);
-			}
-			if (mouseButton === 1){
-				pix.colour = view.palette.foreColour;
-			} else if (mouseButton === 3){
-				pix.colour = view.palette.backColour;
-			}
-
-			// Add pixel to the map.
-			image.map.push(new pixel(
-				Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-				Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-				pix.colour));
-
-			// Draw pixel inside the grid bounds (1 pixel inside).
-			view.ctx.fillStyle = pix.colour;
-			view.ctx.fillRect(
-				pix.x,
-				pix.y,
-				view.scale-1,
-				view.scale-1);
-		} else if (view.palette.mode === "move"){
-	
-		}
-
+		view.drawClick(event);
 	}
 });
 
