@@ -83,6 +83,32 @@ var view = new function(){
 	this.grid = {};
 	this.grid.origin = {};
 	
+	
+	// Palette.
+	this.palette = document.getElementById('palette');
+	this.palette.width = 201;
+	this.palette.height = 401;
+	this.palette.ctx = this.palette.getContext('2d');
+	this.palette.x = 49;
+	this.palette.y = 49;
+	$(this.palette).css('top', this.palette.x);
+	$(this.palette).css('left', this.palette.y);
+	this.palette.bgcolour = "#FFFFFF";
+	this.palette.currentColour = "#0099FF";
+	this.palette.tiles = new Array;
+	this.palette.tiles.push(new box(
+		5,
+		5,
+		25,
+		25,
+		"#FF0000"));
+	this.palette.tiles.push(new box(
+		5,
+		35,
+		25,
+		25,
+		"#0099FF"));
+	
 	this.draw = function draw(){	
 
 		// Draw grid: vertical lines
@@ -112,49 +138,26 @@ var view = new function(){
 					view.scale - 1)
 			}
 		}
+	}
+	
+	this.palette.draw = function paletteDraw(){
 		
-		// Draw palette:
 		
-		// Vital stats.
-		this.palette = document.getElementById('palette');
-		this.palette.width = 200;
-		this.palette.height = 400;
-		this.palette.ctx = this.palette.getContext('2d');
-		this.palette.x = 50;
-		this.palette.y = 50;
-		$(this.palette).css('top', this.palette.x);
-		$(this.palette).css('left', this.palette.y);
-		this.palette.bgcolour = "#FFFFFF";
-		this.palette.currentColour = "#0099FF";
-		this.palette.tiles = new Array;
-		this.palette.tiles.push(new box(
-			this.palette.x + 5,
-			this.palette.y + 5,
-			25,
-			25,
-			"#FF0000"));
-		this.palette.tiles.push(new box(
-			this.palette.x + 5,
-			this.palette.y + 35,
-			25,
-			25,
-			"#0099FF"));
-		
-		// Draw background.
-		view.palette.ctx.fillStyle = this.palette.bgcolour;
+		// Draw palette background.
+		view.palette.ctx.fillStyle = view.palette.bgcolour;
 		view.palette.ctx.fillRect(
-			this.palette.x,
-			this.palette.y,
-			this.palette.width,
-			this.palette.height);
+			0,
+			0,
+			view.palette.width,
+			view.palette.height);
 		
 		// Draw black border.	
 		view.palette.ctx.strokeStyle = "#000000";
 		view.palette.ctx.strokeRect(
-			this.palette.x-0.5,
-			this.palette.y-0.5,
-			this.palette.width,
-			this.palette.height);
+			0.5,
+			0.5,
+			view.palette.width-1,
+			view.palette.height-1);
 		
 		
 		// Draw palette tiles.
@@ -176,11 +179,10 @@ var view = new function(){
 				currentTile.width-1,
 				currentTile.height-1);	
 		}	
-		
-		
 	}
 }
 view.draw();
+view.palette.draw();
 
 var image = new function(){
 	this.map = new Array;
@@ -216,43 +218,43 @@ $('#pixdraw').mousedown(function(event){
 	pix.y = Math.floor(click.y/view.scale)*view.scale;
 	pix.width = view.scale;
 	pix.height = view.scale;
-	
-	// If we are inside the palette box...
-	
-	if (isIn(pix,view.palette)){
-		
-		// If we are inside the red box!
-		for (i=0;i<view.palette.tiles.length;i++){
-			if (isIn(click,view.palette.tiles[i])){
-				view.palette.currentColour = view.palette.tiles[i].colour;
-			}
-		}
-		
-	} else {
-	
-		
-		// If no pixels have been drawn, this is the origin.
-		if (!image.map[0]){
-			image.origin.x = Math.floor(pix.x/view.scale);
-			image.origin.y = Math.floor(pix.y/view.scale);
-		}
-	
-		// Add pixel to the map.
-		image.map.push(new pixel(
-			Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-			Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-			view.palette.currentColour));
-		
-		// Draw pixel inside the grid bounds (1 pixel inside).
-		view.ctx.fillStyle = view.palette.currentColour;
-		view.ctx.fillRect(
-			pix.x,
-			pix.y,
-			view.scale-1,
-			view.scale-1);	
-	
+
+	// If no pixels have been drawn, this is the origin.
+	if (!image.map[0]){
+		image.origin.x = Math.floor(pix.x/view.scale);
+		image.origin.y = Math.floor(pix.y/view.scale);
 	}
+
+	// Add pixel to the map.
+	image.map.push(new pixel(
+		Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
+		Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
+		view.palette.currentColour));
+	
+	// Draw pixel inside the grid bounds (1 pixel inside).
+	view.ctx.fillStyle = view.palette.currentColour;
+	view.ctx.fillRect(
+		pix.x,
+		pix.y,
+		view.scale-1,
+		view.scale-1);	
 });
+
+$('#palette').mousedown(function(event){
+	console.log(event);
+	var click = {}
+	click.x = event.offsetX;
+	click.y = event.offsetY;
+	
+	for (i=0;i<view.palette.tiles.length;i++){
+		if (isIn(click, view.palette.tiles[i])){
+			view.palette.currentColour = view.palette.tiles[i].colour;
+		}
+	}
+		
+});
+
+$('#colourpicker').CanvasColorPicker({flat: true});
 
 $(window).resize(function(){
 	view.width = $(window).width();
