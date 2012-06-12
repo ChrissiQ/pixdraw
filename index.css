@@ -2,3 +2,18 @@ body{
 	padding: 0;
 	margin: 0;
 }
+#pixdraw{
+	z-index: 0;
+}
+#palette{
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+}
+#colourpicker{
+	position: absolute; 
+	top: 0;
+	left: 0;
+	z-index: 2;
+}

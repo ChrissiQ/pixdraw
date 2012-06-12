@@ -113,14 +113,17 @@ var view = new function(){
 			}
 		}
 		
-		// Draw palette
+		// Draw palette:
 		
 		// Vital stats.
-		this.palette = {};
-		this.palette.x = 50;
-		this.palette.y = 50;
+		this.palette = document.getElementById('palette');
 		this.palette.width = 200;
 		this.palette.height = 400;
+		this.palette.ctx = this.palette.getContext('2d');
+		this.palette.x = 50;
+		this.palette.y = 50;
+		$(this.palette).css('top', this.palette.x);
+		$(this.palette).css('left', this.palette.y);
 		this.palette.bgcolour = "#FFFFFF";
 		this.palette.currentColour = "#0099FF";
 		this.palette.tiles = new Array;
@@ -138,16 +141,16 @@ var view = new function(){
 			"#0099FF"));
 		
 		// Draw background.
-		view.ctx.fillStyle = this.palette.bgcolour;
-		view.ctx.fillRect(
+		view.palette.ctx.fillStyle = this.palette.bgcolour;
+		view.palette.ctx.fillRect(
 			this.palette.x,
 			this.palette.y,
 			this.palette.width,
 			this.palette.height);
 		
 		// Draw black border.	
-		view.ctx.strokeStyle = "#000000";
-		view.ctx.strokeRect(
+		view.palette.ctx.strokeStyle = "#000000";
+		view.palette.ctx.strokeRect(
 			this.palette.x-0.5,
 			this.palette.y-0.5,
 			this.palette.width,
@@ -159,20 +162,22 @@ var view = new function(){
 		for (m=0;m<view.palette.tiles.length;m++){
 			currentTile = view.palette.tiles[m];
 			// Draw rectangular bound.
-			view.ctx.strokeStyle = "#000000";
-			view.ctx.strokeRect(
+			view.palette.ctx.strokeStyle = "#000000";
+			view.palette.ctx.strokeRect(
 				currentTile.x + 0.5,
 				currentTile.y + 0.5,
 				currentTile.width,
 				currentTile.height);
 			// Fill with shade.
-			view.ctx.fillStyle = currentTile.colour;
-			view.ctx.fillRect(
+			view.palette.ctx.fillStyle = currentTile.colour;
+			view.palette.ctx.fillRect(
 				currentTile.x +1,
 				currentTile.y + 1,
 				currentTile.width-1,
 				currentTile.height-1);	
 		}	
+		
+		
 	}
 }
 view.draw();
@@ -198,7 +203,7 @@ $(document).bind('mousewheel', function(event, delta, deltaX, deltaY) {
 	view.draw();
 });
 
-$(document).mousedown(function(event){
+$('#pixdraw').mousedown(function(event){
 
 	// Click event location.
 	var click = {};

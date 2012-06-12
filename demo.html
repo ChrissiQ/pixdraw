@@ -1,0 +1,528 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+	   <meta http-equiv="X-UA-Compatible" content="IE=9" />
+	   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>HMTL5 Canvas Based Photoshop Like Color Picker</title>
+      <meta name="description" 
+            content="JSWidget.com is the place where people can explore new features provided within HTML5 and CSS3. These new
+                     HTML5 and CSS3 features will be explored via the implementation of real online applications like iPaint, 
+                     iPaintPro, iPaintMobile." />
+      <meta name="keywords" content="online painting program, canvas paint, html5, css3, ms paint, ms paint like program, photoshop alternative
+                  canvas, online image editor, online photo editor, photoshop algorithms" />
+      <meta name="author" content="Yubo Dong" />
+      <link rel="stylesheet" type="text/css" href="http://www.jswidget.com/theme/main.css" />
+      
+      <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+      
+      <script type="text/javascript" src="./jquery.ps-color-picker.min.js"></script>
+      <script type="text/javascript">
+      
+      jQuery(document).ready(function(){
+         
+         window.setTimeout(function(){
+            $(".cp1").CanvasColorPicker({
+                  flat:true,
+                  onColorChange:function(rgb,hsv){
+                     $(".cp1-preview").css("color","RGB(" + rgb.r + "," + rgb.g  + "," + rgb.b + ")");
+                     $(".cp1-preview pre")
+                        .css("color","rgb(0,0,0)")
+                        .css("background-color","RGB(" + rgb.r + "," + rgb.g  + "," + rgb.b + ")");
+                  }
+               });},200
+         );
+         $(".cp2").CanvasColorPicker();
+         $(".cp3").CanvasColorPicker();
+         $(".cp5").CanvasColorPicker({
+            width:300,height:160,
+            
+            color:{r:64,g:255,b:255},
+            drawColorMapPointer:function(ctx,w,h,x,y,l){
+               if ( this.icon == null ){
+                  this.icon = document.createElement("canvas");
+                  this.icon.width = "16"; this.icon.height = "16";
+                  var ctx1 = this.icon.getContext("2d");
+                  ctx1.beginPath();
+                  ctx1.strokeStyle = "rgb(255,255,255)";
+                  ctx1.moveTo(0,0);ctx1.lineTo(16,16);
+                  ctx1.moveTo(0,16);ctx1.lineTo(16,0);
+                  ctx1.stroke();
+               }
+               ctx.drawImage(this.icon,x-8,y-8);
+            },
+            drawHueMapPointer:function(ctx,w,h,x,y,l){
+               if ( this.icon == null ){
+                  this.icon = document.createElement("canvas");
+                  this.icon.width = "8"; this.icon.height = "8";
+                  var ctx1 = this.icon.getContext("2d");
+                  ctx1.beginPath();
+                  ctx1.strokeStyle = "rgb(255,255,255)";
+                  ctx1.moveTo(0,0);ctx1.lineTo(8,8);
+                  ctx1.moveTo(0,8);ctx1.lineTo(8,0);
+                  ctx1.stroke();
+               }
+               ctx.drawImage(this.icon,x-4,y-4);
+            }
+         });
+         
+         $(".cp6").CanvasColorPicker({
+            width:300,height:150,
+            drawColorMapPointer:function(ctx,w,h,x,y,l){
+               ctx.beginPath();
+               ctx.lineWidth = 1;
+               ctx.strokeStyle = ( l < 128 ) ? "rgb(255,255,255)" : "rgb(0,0,0)";
+               
+               ctx.moveTo(x+0.5,0.5); 
+               ctx.lineTo(x+0.5,h-0.5);
+               
+               ctx.moveTo(0.5,y + 0.5); 
+               ctx.lineTo(w-0.5,y+0.5);
+               
+               ctx.stroke();
+            }
+         });
+      });
+      </script>
+  	  <script type="text/javascript">
+         var _gaq = _gaq || [];
+         _gaq.push(['_setAccount', 'UA-6883753-2']);
+         _gaq.push(['_trackPageview']);
+
+         (function() {
+           var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+           ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+           var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+         })();
+      </script>
+   </head>
+	<body>
+      <div id="header">
+         <div class="html5-bg"></div>
+         <div class="jswidget"></div>
+         <div class="slogan">A site to explore HTML5 features ...</div>
+      </div>	
+      <div id="menubar">
+         <ul>
+            <li class="selected"><a href="index.html" target="_self">Home</a></li>
+            <li><a target="_self" href="index-ipaint.html">iPaint</a></li>
+            <li><a target="_self" href="index-ipaint-mobile.html">iPaint!Mobile</a></li>
+            <li><a target="_self" href="index-ipaintpro.html">iPaintPro</a></li>
+            <li><a target="_self" href="canvas-cp.html">Goodies</a></li>
+            <li><a target="_self" href="contact.html">Contact</a></li>
+            <li><a target="_self" href="http://www.jswidget.com/blog/" style="color:yellow;font-size:1.2em;">BLOG!</a></li>
+         </ul>
+         <div class="fold-left"></div>
+         <div class="fold-right"></div>
+      </div>
+      <div id="infobar">
+         <div class="slogan">
+            <div class="html5-32"></div>
+            jQuery Canvas-based Photoshop Like Color Picker Plugin
+         </div>
+         <div class="twitter">
+            <div class="icon"></div>
+            <div class="text"><a href="http://twitter.com/jswidget" target="_blank">Follow on Twitter</a></div>
+         </div>
+      </div>
+      <div class="section-divider"></div>
+      
+      <div id="content">
+         <h2>Yet Another jQuery Photoshop Like Color Picker Plugin</h2>
+         <div class="text">
+            <p>
+            Yes, there are many different color picker widgets out there implemented using JavaScript. 
+            Yet this one is different with any of them from the root. As you might have noticed, yes, it's 
+            implemented using the HTML5 &lt;canvas&gt; element. The transparent image based color
+            picker has a big drawback: it's hard to resize. You always limited by the image size when you
+            want to display a proper-sized color picker for you application. But canvas based color picker
+            is different. You can change the color picker to any size you want.
+            </p>
+            <p>
+            Many demos and demo source code are provided in the following section. They are all alive for you to try. 
+            Detailed document and source code are also available for download.
+            </p>
+         </div>
+         <div class="text">
+            <ol>
+               
+               <li>
+                  <h3>Simple popup color picker linked to DIV element</h3>
+                  <div class="cp2" style="width:80px;height:30px;background:#eeeeee;border:1px solid black;line-height:30px;text-align:center;">Click Me</div>
+                  <div class="cp2-preview" style="padding:10px;">
+                     <div><strong>Source Code:</strong></div>
+                     <pre>
+$(".cp2").CanvasColorPicker();
+                     </pre>
+                  </div>
+               </li>
+               
+               <li>
+                  <h3>Simple popup color picker linked to INPUT element</h3>
+                  <div><input type="text" class="cp3" value="#FF0000"/></div>
+                  <div class="cp3-preview" style="padding:10px;">
+                     <div><strong>Source Code:</strong></div>
+                     <pre>
+$(".cp3").CanvasColorPicker();
+                     </pre>
+                  </div>
+               </li>
+
+               <li>
+                  <h3>Flat mode color picker with different size:</h3>
+                  <div style="position:relative;height:220px;">
+                     <div class="cp1" style="position:absolute;bottom:0px;left:0px;  width:70px; height:30px; background:#88cccc;"></div>
+                     <div class="cp1" style="position:absolute;bottom:0px;left:70px; width:90px; height:60px; background:#cc8888;"></div>
+                     <div class="cp1" style="position:absolute;bottom:0px;left:160px;width:140px;height:100px;background:#88cc88;"></div>
+                     <div class="cp1" style="position:absolute;bottom:0px;left:300px;width:280px;height:140px;background:#8888cc;"></div>
+                     <div class="cp1" style="position:absolute;bottom:0px;left:580px;width:340px;height:200px;background:#cccc88;"></div>
+                  </div>
+                  <div style="position:relative;margin-top:30px;">
+                     <div style="position:absolute;bottom:0px;left:0px;  width:70px; height:30px;line-height:30px;text-align:center;">70x30</div>
+                     <div style="position:absolute;bottom:0px;left:70px; width:90px; height:30px;line-height:30px;text-align:center;">90x60</div>
+                     <div style="position:absolute;bottom:0px;left:160px;width:140px;height:30px;line-height:30px;text-align:center;">140x100</div>
+                     <div style="position:absolute;bottom:0px;left:300px;width:280px;height:30px;line-height:30px;text-align:center;">280x140</div>
+                     <div style="position:absolute;bottom:0px;left:580px;width:340px;height:30px;line-height:30px;text-align:center;">340x200</div>
+                  </div>
+                  <div class="cp1-preview" style="padding:10px;clear:both;">
+                     This is the test text for Flat mode color picker. When color is changing, the color of this text will be changed 
+                     as well.
+                     <div><strong>Source Code:</strong></div>
+                     <pre>
+$(".cp1").CanvasColorPicker({
+      flat:true,
+      onColorChange:function(rgb,hsv){
+         $(".cp1-preview").css("color","RGB(" + rgb.r + "," + rgb.g  + "," + rgb.b + ")");
+         $(".cp1-preview pre")
+            .css("color","rgb(0,0,0)")
+            .css("background-color","RGB(" + rgb.r + "," + rgb.g  + "," + rgb.b + ")");
+      }
+   });
+                     </pre>
+                  </div>
+               </li>
+
+               <li>
+                  <h3>Customized Color Picker</h3>
+                  <div class="cp5" style="width:80px;height:30px;background:#eeeeee;border:1px solid black;line-height:30px;text-align:center;">Click Me</div>
+                  <div class="cp5-preview" style="padding:10px;">
+                     <div><strong>Source Code:</strong></div>
+                     <pre>
+$(".cp5").CanvasColorPicker({
+   width:300,
+   height:160,   
+   color:{r:64,g:255,b:255},
+   drawColorMapPointer:function(ctx,w,h,x,y,l){
+      if ( this.icon == null ){
+         this.icon = document.createElement("canvas");
+         this.icon.width = "16"; this.icon.height = "16";
+         var ctx1 = this.icon.getContext("2d");
+         ctx1.beginPath();
+         ctx1.strokeStyle = "rgb(255,255,255)";
+         ctx1.moveTo(0,0);ctx1.lineTo(16,16);
+         ctx1.moveTo(0,16);ctx1.lineTo(16,0);
+         ctx1.stroke();
+      }
+      ctx.drawImage(this.icon,x-8,y-8);
+   },
+   drawHueMapPointer:function(ctx,w,h,x,y,l){
+      if ( this.icon == null ){
+         this.icon = document.createElement("canvas");
+         this.icon.width = "8"; this.icon.height = "8";
+         var ctx1 = this.icon.getContext("2d");
+         ctx1.beginPath();
+         ctx1.strokeStyle = "rgb(255,255,255)";
+         ctx1.moveTo(0,0);ctx1.lineTo(8,8);
+         ctx1.moveTo(0,8);ctx1.lineTo(8,0);
+         ctx1.stroke();
+      }
+      ctx.drawImage(this.icon,x-4,y-4);
+   }
+});
+                     </pre>
+                  </div>
+               </li>
+               
+               <li>
+                  <h3>Another Customized Color Picker</h3>
+                  <div class="cp6" style="width:80px;height:30px;background:#eeeeee;border:1px solid black;line-height:30px;text-align:center;">Click Me</div>
+                  <div class="cp6-preview" style="padding:10px;">
+                     <div><strong>Source Code:</strong></div>
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   width:300,height:150,
+   drawColorMapPointer:function(ctx,w,h,x,y,l){
+      ctx.beginPath();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = ( l < 128 ) ? "rgb(255,255,255)" : "rgb(0,0,0)";
+      
+      ctx.moveTo(x+0.5,0.5); 
+      ctx.lineTo(x+0.5,h-0.5);
+      
+      ctx.moveTo(0.5,y + 0.5); 
+      ctx.lineTo(w-0.5,y+0.5);
+      
+      ctx.stroke();
+   }
+});
+                     </pre>
+                  </div>
+               </li>
+            </ol>
+	      </div>
+	         
+         <h2>Canvas Color Picker Document</h2>
+         <div class="text">
+            <br />
+            <table cellspacing="0" cellpadding="5">
+               <tr><th>Options</th><th>Default&nbsp;value</th><th>Description</th></tr>
+               <tr>
+                  <td>flat</td>
+                  <td>false</td>
+                  <td>
+                     Set to true to make the color picker showing in current page. The matched elements will
+                     become the container of the color picker and the size of the matched elements is the size
+                     of the color picker. 
+                  </td>
+               </tr>
+               <tr>
+                  <td>width</td>
+                  <td>400</td>
+                  <td>
+                     The width of the color picker. If the color picker is in flat mode, this value will be
+                     ignored and the matched element width will be used instead. The minimum width of a color
+                     picker is 60. Any setting with less than 60 width will be adjusted to 60.
+                  </td>
+               </tr>
+               <tr>
+                  <td>height</td>
+                  <td>400</td>
+                  <td>
+                     The height of the color picker. If the color picker is in flat mode, this value will be
+                     ignored and the matched element height will be used instead. The minimum height of a color
+                     picker is 30. Any setting with less than 30 height will be adjusted to 30.
+                  </td>
+               </tr>
+               <tr>
+                  <td>color</td>
+                  <td>rgb(0,0,0)</td>
+                  <td>
+                     Initial color when the color picker is visible. If the matched element is an input box, the initial color
+                     will be the value of the input text if the text can be parsed as a valid color value like #FFFFFF
+                  </td>
+               </tr>
+               <tr>
+                  <td colspan="3">&nbsp;</td>
+               </tr>
+               <tr>
+                  <td>showColor</td>
+                  <td>true</td>
+                  <td>
+                     Flat to show or hide the color value. By default it will show the color value, however these
+                     flag will be auto-overwritten to false when there is not enough space to show it. It will be
+                     set to false when width of the color picker is less than 200 or height of the color picker is 
+                     less than 100.
+                  </td>
+               </tr>
+               <tr>
+                  <td>showRGB</td>
+                  <td>true</td>
+                  <td>
+                     Flat to show or hide the individual R,G,B channel value. By default it will show the R,G,B value, 
+                     however these flag will be auto-overwritten to false when there is not enough space to show it. 
+                     It will be set to false when width of the color picker is less than 200 or height of the color picker is 
+                     less than 150.
+                  </td>
+               </tr>
+               <tr>
+                  <td>showHSB</td>
+                  <td>true</td>
+                  <td>
+                     Flat to show or hide the individual hue, saturation and brightness value. By default it will show the 
+                     H,S,B value, however these flag will be auto-overwritten to false when there is not enough space to show it. 
+                     It will be set to false when width of the color picker is less than 200 or height of the color picker is 
+                     less than 150.
+                  </td>
+               </tr>
+               <tr>
+                  <td>showButtons</td>
+                  <td>true</td>
+                  <td>
+                     Flat to show or hide the OK, Cancel button. By default it will show these two buttons. 
+                     However this flag will be auto-overwritten to false when there is not enough space to show it. 
+                     It will be set to false when width of the color picker is less than 200 or height of the color picker is 
+                     less than 150.
+                  </td>
+               </tr>
+               <tr>
+                  <td>showPreview</td>
+                  <td>true</td>
+                  <td>
+                     Flat to show or hide the preview color box. By default it will show the preview color box.
+                     However this flag will be auto-overwritten to false when there is not enough space to show it. 
+                     It will be set to false when width of the color picker is less than 200 or height of the color picker is 
+                     less than 100.
+                  </td>
+               </tr>
+               <tr>
+                  <td colspan="3">&nbsp;</td>
+               </tr>
+               
+               <tr>
+                  <td>onColorChange</td>
+                  <td>callback function</td>
+                  <td>
+                     Callback function triggered when color is changed.<br />
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   onColorChange: function(RGB,HSB){
+      // RGB, current color in rgb format: {r,g,b}
+      // HSB: current color in hsb format: {h,s,b}
+      
+      // Your code starts from here
+      
+   }
+});
+                     </pre>
+                  </td>
+               </tr>
+
+               <tr>
+                  <td>onOK</td>
+                  <td>callback function</td>
+                  <td>
+                     Callback function triggered when <strong>OK</strong> button is clicked.<br />
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   onOK: function(RGB,HSB){
+      // RGB, current color in rgb format: {r,g,b}
+      // HSB: current color in hsb format: {h,s,b}
+      
+      // Your code starts from here
+      
+      // return true will hide the color picker, 
+      //        false will not hide the color picker
+   }
+});
+                     </pre>
+                  </td>
+               </tr>
+               
+
+               <tr>
+                  <td>onCancel</td>
+                  <td>callback function</td>
+                  <td>
+                     Callback function triggered when <strong>Cancel</strong> button is clicked.<br />
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   onCancel: function(RGB,HSB){
+      // RGB, original color in rgb format: {r,g,b}
+      // HSB: original color in hsb format: {h,s,b}
+      
+      // Your code starts from here
+      
+      // return true will hide the color picker, 
+      //        false will not hide the color picker
+   }
+});
+                     </pre>
+                  </td>
+               </tr>
+
+
+               <tr>
+                  <td>drawColorMapPointer</td>
+                  <td>callback function</td>
+                  <td>
+                     Callback function triggered to draw a customized color map pointer.<br />
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   drawColorMapPointer: function(context,width,height,x,y,luminosity){
+      // context    : Canvas context of the color map
+      // width      : width of color map canvas
+      // height     : height of color map canvas
+      // x          : Horizontal position relative to color map canvas
+      // y          : Vertical position relative to color map canvas
+      // luminosity : Calculated luminosity value of the color in (x,y) 
+      //              position of color map canvas
+      
+      // Your code starts from here
+   }
+});
+                     </pre>
+                  </td>
+               </tr>
+
+
+
+               <tr>
+                  <td>drawHueMapPointer</td>
+                  <td>callback function</td>
+                  <td>
+                     Callback function triggered to draw a customized hue map pointer.<br />
+                     <pre>
+$(".cp6").CanvasColorPicker({
+   drawHueMapPointer: function(context,width,height,x,y,luminosity){
+      // context    : Canvas context of the hue map
+      // width      : width of hue map canvas
+      // height     : height of hue map canvas
+      // x          : Horizontal position relative to hue map canvas
+      // y          : Vertical position relative to hue map canvas
+      // luminosity : Calculated luminosity value of the color in (x,y) 
+      //              position of hue map canvas
+      
+      // Your code starts from here
+   }
+});
+                     </pre>
+                  </td>
+               </tr>
+                             
+                             
+            </table>
+         </div>
+         <br /><br />
+         
+         <h2>Other great javascript color pickers</h2>
+         <div class="text">
+            <ul>
+               <li><a href="http://eyecon.ro/colorpicker/#about" target="_blank">http://eyecon.ro/colorpicker/#about</a></li>
+               <li><a href="http://www.dematte.at/colorPicker/" target="_blank">http://www.dematte.at/colorPicker/</a></li>
+               <li><a href="http://johndyer.name/lab/colorpicker/" target="_blank">http://johndyer.name/lab/colorpicker/</a></li>
+               <li><a href="http://www.digitalmagicpro.com/jPicker/" target="_blank">http://www.digitalmagicpro.com/jPicker/</a></li>
+               <li><a href="http://www.webreference.com/programming/javascript/mk/column3/" target="_blank">How to Create a Color Picker in JavaScript </a>using transparent image</li>
+            </ul>
+         </div>
+         
+         <h2>Source Code Download</h2>
+         <div class="text">
+            <ul>
+               <li>
+                  <a href="#">jquery.canvas-color-picker.min.js (12 KB)</a>
+               </li>
+               <li>
+                  <a href="#">jquery.canvas-color-picker.js (29 KB)</a>
+               </li>
+               <li>
+                  <a href="#">jQuery canvas based color picker plugin source code and demo (.rar)</a>
+               </li>
+            </ul>
+            
+         </div>
+         
+      </div>
+      <br /><br />
+      
+      <div id="footer">
+         <div>
+            <ul class="footer">
+               <li><a href="about.html">About</a></li>
+               <li><a href="privacy-policy.html">Privacy Policy</a></li>
+               <li><a href="terms-of-service.html">Terms of Service</a></li>
+            </ul>
+         </div>
+         <div class="copyright">Copyright © 2011. www.jswidget.com. All Rights Reserved</div>
+      </div>
+      
+	</body>
+</html>
