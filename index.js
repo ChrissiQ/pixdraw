@@ -1,3 +1,6 @@
+var mouseDown;
+var mouseButton;
+
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -156,16 +159,12 @@ var image = new function(){
 	this.origin = {};
 }
 
-$(document).bind('mousewheel', function(event, delta, deltaX, deltaY) {
+$(document).bind('mousewheel', function(event, delta) {
 // Determine which way the mouse wheel spun, and scale the page.
-	if (event.wheelDelta > 0){
+	if (event.wheelDelta > 0 || delta > 0){
 		if (view.scale<100) view.scale++;
-		if (view.scale > 6) view.ctx.strokeStyle = "#AAAAAA";
-		if (view.scale > 10) view.ctx.strokeStyle="#888888";
-	} else if (event.wheelDelta < 0){
+	} else if (event.wheelDelta < 0 || delta < 0){
 		if (view.scale>5) view.scale--;
-		if (view.scale<10) view.ctx.strokeStyle="#AAAAAA";
-		if (view.scale == 5) view.ctx.strokeStyle="#DDDDDD";
 	}
 
 	view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
@@ -178,18 +177,16 @@ $("#pixdraw").bind("contextmenu", function(e) {
 
 
 $('#pixdraw').mousedown(function(event){
-
+	mouseDown = true;
+	mouseButton = event.which;
 	// Click event location.
 	var click = {};
 	click.x = event.clientX;
 	click.y = event.clientY;
-	
 	// Top left corner of pixel square.
 	var pix = {};
 	pix.x = Math.floor(click.x/view.scale)*view.scale;
 	pix.y = Math.floor(click.y/view.scale)*view.scale;
-	pix.width = view.scale;
-	pix.height = view.scale;
 
 	if (view.palette.mode === "draw"){
 
@@ -198,18 +195,18 @@ $('#pixdraw').mousedown(function(event){
 			image.origin.x = Math.floor(pix.x/view.scale);
 			image.origin.y = Math.floor(pix.y/view.scale);
 		}
-		if (event.which === 1){
+		if (mouseButton === 1){
 			pix.colour = view.palette.foreColour;
-		} else if (event.which === 3){
+		} else if (mouseButton === 3){
 			pix.colour = view.palette.backColour;
 		}
-	
+
 		// Add pixel to the map.
 		image.map.push(new pixel(
 			Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
 			Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
 			pix.colour));
-	
+
 		// Draw pixel inside the grid bounds (1 pixel inside).
 		view.ctx.fillStyle = pix.colour;
 		view.ctx.fillRect(
@@ -218,7 +215,57 @@ $('#pixdraw').mousedown(function(event){
 			view.scale-1,
 			view.scale-1);
 	} else if (view.palette.mode === "move"){
-		
+	
+	}
+
+});
+
+$('#pixdraw').mouseup(function(){
+	mouseDown = false;
+	mouseButton = false;
+});
+
+$('#pixdraw').mousemove(function(event){
+	if (mouseDown === true){
+		// Click event location.
+		var click = {};
+		click.x = event.clientX;
+		click.y = event.clientY;
+		// Top left corner of pixel square.
+		var pix = {};
+		pix.x = Math.floor(click.x/view.scale)*view.scale;
+		pix.y = Math.floor(click.y/view.scale)*view.scale;
+
+		if (view.palette.mode === "draw"){
+
+			// If no pixels have been drawn, this is the origin.
+			if (!image.map[0]){
+				image.origin.x = Math.floor(pix.x/view.scale);
+				image.origin.y = Math.floor(pix.y/view.scale);
+			}
+			if (mouseButton === 1){
+				pix.colour = view.palette.foreColour;
+			} else if (mouseButton === 3){
+				pix.colour = view.palette.backColour;
+			}
+
+			// Add pixel to the map.
+			image.map.push(new pixel(
+				Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
+				Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
+				pix.colour));
+
+			// Draw pixel inside the grid bounds (1 pixel inside).
+			view.ctx.fillStyle = pix.colour;
+			view.ctx.fillRect(
+				pix.x,
+				pix.y,
+				view.scale-1,
+				view.scale-1);
+		} else if (view.palette.mode === "move"){
+	
+		}
+
 	}
 });
 
