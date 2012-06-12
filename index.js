@@ -159,11 +159,11 @@ var image = new function(){
 	this.origin = {};
 }
 
-$(document).bind('mousewheel', function(event, delta) {
+$("#pixdraw").bind('mousewheel', function(event, delta) {
 // Determine which way the mouse wheel spun, and scale the page.
-	if (event.wheelDelta > 0 || delta > 0){
+	if (delta > 0){
 		if (view.scale<100) view.scale++;
-	} else if (event.wheelDelta < 0 || delta < 0){
+	} else if (delta < 0){
 		if (view.scale>5) view.scale--;
 	}
 
