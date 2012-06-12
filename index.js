@@ -1,3 +1,12 @@
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
 function pixel(x,y,colour){
 	this.x = x ? x : 0;
 	this.y = y ? y : 0;
@@ -86,27 +95,26 @@ var view = new function(){
 	
 	// Palette.
 	this.palette = document.getElementById('palette');
-	this.palette.width = 201;
+	this.palette.width = 61;
 	this.palette.height = 401;
-	this.palette.ctx = this.palette.getContext('2d');
 	this.palette.x = 49;
 	this.palette.y = 49;
 	$(this.palette).css('top', this.palette.x);
 	$(this.palette).css('left', this.palette.y);
-	this.palette.bgcolour = "#FFFFFF";
-	this.palette.currentColour = "#0099FF";
+	this.palette.backColour = "#FFFFFF";
+	this.palette.foreColour = "#0099FF";
 	this.palette.tiles = new Array;
 	this.palette.tiles.push(new box(
 		5,
 		5,
-		25,
-		25,
+		50,
+		50,
 		"#FF0000"));
 	this.palette.tiles.push(new box(
 		5,
-		35,
-		25,
-		25,
+		55,
+		50,
+		50,
 		"#0099FF"));
 	
 	this.draw = function draw(){	
@@ -139,50 +147,8 @@ var view = new function(){
 			}
 		}
 	}
-	
-	this.palette.draw = function paletteDraw(){
-		
-		
-		// Draw palette background.
-		view.palette.ctx.fillStyle = view.palette.bgcolour;
-		view.palette.ctx.fillRect(
-			0,
-			0,
-			view.palette.width,
-			view.palette.height);
-		
-		// Draw black border.	
-		view.palette.ctx.strokeStyle = "#000000";
-		view.palette.ctx.strokeRect(
-			0.5,
-			0.5,
-			view.palette.width-1,
-			view.palette.height-1);
-		
-		
-		// Draw palette tiles.
-		
-		for (m=0;m<view.palette.tiles.length;m++){
-			currentTile = view.palette.tiles[m];
-			// Draw rectangular bound.
-			view.palette.ctx.strokeStyle = "#000000";
-			view.palette.ctx.strokeRect(
-				currentTile.x + 0.5,
-				currentTile.y + 0.5,
-				currentTile.width,
-				currentTile.height);
-			// Fill with shade.
-			view.palette.ctx.fillStyle = currentTile.colour;
-			view.palette.ctx.fillRect(
-				currentTile.x +1,
-				currentTile.y + 1,
-				currentTile.width-1,
-				currentTile.height-1);	
-		}	
-	}
 }
 view.draw();
-view.palette.draw();
 
 var image = new function(){
 	this.map = new Array;
@@ -205,6 +171,11 @@ $(document).bind('mousewheel', function(event, delta, deltaX, deltaY) {
 	view.draw();
 });
 
+$("#pixdraw").bind("contextmenu", function(e) {
+    return false;
+});
+
+
 $('#pixdraw').mousedown(function(event){
 
 	// Click event location.
@@ -224,15 +195,20 @@ $('#pixdraw').mousedown(function(event){
 		image.origin.x = Math.floor(pix.x/view.scale);
 		image.origin.y = Math.floor(pix.y/view.scale);
 	}
-
+	if (event.which === 1){
+		pix.colour = view.palette.foreColour;
+	} else if (event.which === 3){
+		pix.colour = view.palette.backColour;
+	}
+	
 	// Add pixel to the map.
 	image.map.push(new pixel(
 		Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
 		Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-		view.palette.currentColour));
+		pix.colour));
 	
 	// Draw pixel inside the grid bounds (1 pixel inside).
-	view.ctx.fillStyle = view.palette.currentColour;
+	view.ctx.fillStyle = pix.colour;
 	view.ctx.fillRect(
 		pix.x,
 		pix.y,
@@ -240,7 +216,7 @@ $('#pixdraw').mousedown(function(event){
 		view.scale-1);	
 });
 
-$('#palette').mousedown(function(event){
+/*$('#palette').mousedown(function(event){
 	console.log(event);
 	var click = {}
 	click.x = event.offsetX;
@@ -252,9 +228,19 @@ $('#palette').mousedown(function(event){
 		}
 	}
 		
-});
+});*/
 
-$('#colourpicker').CanvasColorPicker({flat: true});
+$('#fore').CanvasColorPicker({onColorChange: function(RGB, HSB){
+	  // RGB, current color in rgb format: {r,g,b}
+      // HSB: current color in hsb format: {h,s,b}
+      view.palette.foreColour = rgbToHex(RGB.r,RGB.g,RGB.b);
+      
+}});
+$('#back').CanvasColorPicker({onColorChange: function(RGB, HSB){
+	  // RGB, current color in rgb format: {r,g,b}
+      // HSB: current color in hsb format: {h,s,b}
+      view.palette.backColour = rgbToHex(RGB.r,RGB.g,RGB.b);
+}});
 
 $(window).resize(function(){
 	view.width = $(window).width();
