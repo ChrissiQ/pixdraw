@@ -11,7 +11,7 @@ body{
 	left: 0;
 	z-index: 1;
 	border: 1px solid black;
-	width: 61px;
+	width: 70px;
 	height: 401px;
 	background-color: white;
 }
@@ -19,25 +19,37 @@ body{
 	position: relative;
 	top: 5px;
 	left: 5px;
-	width: 50px;
-	height: 50px;
+	width: 58px;
+	height: 25px;
 	border: 1px solid black;
-	background-color: red;
+	border-bottom: 0;
+	background-color: blue;
 }
 #back{
 	position: relative;
-	top: 6px;
+	top: 5px;
 	left: 5px;
-	width: 50px;
-	height: 50px;
+	width: 58px;
+	height: 25px;
 	border: 1px solid black;
-	background-color: blue;
+	border-top: 0;
+	background-color: white;
 }
-#colourpicker{
-	position: absolute; 
-	top: 300px;
-	left: 50px;
-	z-index: 2;
-	width: 280px;
-	height: 140px;
+#mover{
+	position: relative;
+	float: left;
+	top: 10px;
+	left: 5px;
+	width: 25px;
+	height: 25px;
+	border: 1px solid black;
+}
+#drawer{
+	position: relative;
+	float: left;
+	top: 10px;
+	left: 10px;
+	width: 25px;
+	height: 25px;
+	border: 1px solid black;
 }

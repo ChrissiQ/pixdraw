@@ -102,8 +102,9 @@ var view = new function(){
 	$(this.palette).css('top', this.palette.x);
 	$(this.palette).css('left', this.palette.y);
 	this.palette.backColour = "#FFFFFF";
-	this.palette.foreColour = "#0099FF";
+	this.palette.foreColour = "#0000FF";
 	this.palette.tiles = new Array;
+	this.palette.mode = "draw";
 	this.palette.tiles.push(new box(
 		5,
 		5,
@@ -190,45 +191,48 @@ $('#pixdraw').mousedown(function(event){
 	pix.width = view.scale;
 	pix.height = view.scale;
 
-	// If no pixels have been drawn, this is the origin.
-	if (!image.map[0]){
-		image.origin.x = Math.floor(pix.x/view.scale);
-		image.origin.y = Math.floor(pix.y/view.scale);
-	}
-	if (event.which === 1){
-		pix.colour = view.palette.foreColour;
-	} else if (event.which === 3){
-		pix.colour = view.palette.backColour;
-	}
+	if (view.palette.mode === "draw"){
+
+		// If no pixels have been drawn, this is the origin.
+		if (!image.map[0]){
+			image.origin.x = Math.floor(pix.x/view.scale);
+			image.origin.y = Math.floor(pix.y/view.scale);
+		}
+		if (event.which === 1){
+			pix.colour = view.palette.foreColour;
+		} else if (event.which === 3){
+			pix.colour = view.palette.backColour;
+		}
 	
-	// Add pixel to the map.
-	image.map.push(new pixel(
-		Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-		Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-		pix.colour));
+		// Add pixel to the map.
+		image.map.push(new pixel(
+			Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
+			Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
+			pix.colour));
 	
-	// Draw pixel inside the grid bounds (1 pixel inside).
-	view.ctx.fillStyle = pix.colour;
-	view.ctx.fillRect(
-		pix.x,
-		pix.y,
-		view.scale-1,
-		view.scale-1);	
+		// Draw pixel inside the grid bounds (1 pixel inside).
+		view.ctx.fillStyle = pix.colour;
+		view.ctx.fillRect(
+			pix.x,
+			pix.y,
+			view.scale-1,
+			view.scale-1);
+	} else if (view.palette.mode === "move"){
+		
+	}
 });
 
-/*$('#palette').mousedown(function(event){
-	console.log(event);
-	var click = {}
-	click.x = event.offsetX;
-	click.y = event.offsetY;
+$('#mover').mousedown(function(){
+
+	view.palette.mode = "move";
+
+});
+
+$('#drawer').mousedown(function(){
+
+	view.palette.mode = "draw";
 	
-	for (i=0;i<view.palette.tiles.length;i++){
-		if (isIn(click, view.palette.tiles[i])){
-			view.palette.currentColour = view.palette.tiles[i].colour;
-		}
-	}
-		
-});*/
+});
 
 $('#fore').CanvasColorPicker({onColorChange: function(RGB, HSB){
 	  // RGB, current color in rgb format: {r,g,b}
@@ -236,6 +240,7 @@ $('#fore').CanvasColorPicker({onColorChange: function(RGB, HSB){
       view.palette.foreColour = rgbToHex(RGB.r,RGB.g,RGB.b);
       
 }});
+
 $('#back').CanvasColorPicker({onColorChange: function(RGB, HSB){
 	  // RGB, current color in rgb format: {r,g,b}
       // HSB: current color in hsb format: {h,s,b}
