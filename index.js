@@ -1,8 +1,8 @@
-$.fn.jPicker.defaults = {
+/**$.fn.jPicker.defaults = {
 	images: {
-		clientPath: '/pixdraw/jPicker/images/', /* Path to image files */
+		clientPath: '/pixdraw/jPicker/images/', /* Path to image files */ /*
 	}
-};
+};*/
 
 function componentToHex(c) {
     hex: c.toString(16);
@@ -33,7 +33,6 @@ var view = {
 };
 
 // Set the size of the canvas element.  Literally.
-
 view.canvas = document.getElementById('pixdraw');
 view.canvas.width = view.width-1;
 view.canvas.height = view.height-5;
@@ -52,6 +51,7 @@ $(view.palette.elem).css('top', view.palette.x);
 $(view.palette.elem).css('left', view.palette.y);
 
 view.draw = function(){	
+view.ctx.strokeStyle = "#888888";
 	// Draw grid: vertical lines
 	for (i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
 		view.ctx.beginPath();
@@ -69,13 +69,15 @@ view.draw = function(){
 		view.ctx.stroke();
 	}
 	// Draw pixels.
+	var pixel = {};
 	if (image && image.map){
 		for (k=0;k<image.map.length;k++){
-			view.ctx.fillStyle = image.map[k].colour;
-			view.ctx.fillRect((image.origin.x + image.map[k].x)*view.scale,
-				(image.origin.y + image.map[k].y)*view.scale,
-				view.scale - 1,
-				view.scale - 1)
+			pixel = {
+				x: (image.origin.x + image.map[k].x)*view.scale,
+				y: (image.origin.y + image.map[k].y)*view.scale,
+				colour: image.map[k].colour
+			};
+			view.drawPixel(pixel);
 		}
 	}
 };
@@ -122,6 +124,7 @@ view.drawClick = function(event){
 				// remove the old one.
 				if (image.map[i].colour != pix.colour){
 					image.map.splice(i,1);
+					view.clearPixel(pix);					
 				} else {
 					coord.exists = true;
 				}
@@ -131,20 +134,23 @@ view.drawClick = function(event){
 		
 		// If it doesn't exist, create a new one!
 		if (coord.exists == false){
-			image.map.push({ x: coord.x, y: coord.y, colour: pix.colour });
-
-			// Draw pixel inside the grid bounds (1 pixel inside).
-			view.ctx.fillStyle = pix.colour;
-			view.ctx.fillRect(
-				pix.x,
-				pix.y,
-				view.scale-1,
-				view.scale-1);
+			image.map.push({x: coord.x, y: coord.y, colour: pix.colour});
+			view.drawPixel(pix);
 		}
 	} else if (view.palette.mode === "move"){
 
 	}
-}		
+}	
+
+view.drawPixel = function(pix){
+	view.ctx.fillStyle = pix.colour;
+	// Draw pixel inside the grid bounds (1 pixel inside).
+	view.ctx.fillRect(pix.x, pix.y, view.scale-1, view.scale-1);
+}	
+view.clearPixel = function(pix){
+	// Erase pixel, not grid.
+	view.ctx.clearRect(pix.x, pix.y, view.scale-1, view.scale-1);
+}
 view.draw();
 
 $("#pixdraw").bind('mousewheel', function(event, delta) {
@@ -194,7 +200,7 @@ $('#drawer').mousedown(function(){
 	
 });
 
-$('#fore').jPicker({ window: { expandable: true }, color: {alphaSupport: true}})
+//$('#fore').jPicker({ window: { expandable: true }, color: {alphaSupport: true}})
 
 /*$('#back').CanvasColorPicker({onColorChange: function(RGB, HSB){
 	  // RGB, current color in rgb format: {r,g,b}
