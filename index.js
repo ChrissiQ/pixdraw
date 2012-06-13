@@ -22,27 +22,28 @@ var view = {
 	scale: 25,
 	width: $(window).width(),
 	height: $(window).height(),
-	canvas: document.getElementByID('pixdraw'),
 	
 	palette: {
-		elem: document.getElementById('palette'),
 		x: 49,
 		y: 49,
-		backColour = "rgba(0,0,0,0.2)",
-		foreColour = "rgba(255,0,0,0.2)",
+		backColour: "rgba(0,0,0,0.2)",
+		foreColour: "rgba(255,0,0,0.2)",
 		mode: "draw"
 	}
 };
 
 // Set the size of the canvas element.  Literally.
+
+view.canvas = document.getElementById('pixdraw');
 view.canvas.width = view.width-1;
 view.canvas.height = view.height-5;
 
 // Get the context of the canvas.  So we can draw!
-view.ctx = this.canvas.getContext('2d');
+view.ctx = view.canvas.getContext('2d');
 view.ctx.strokeStyle = "#888888";
 
 // Set the size of the palette element.  Again, literally.
+view.palette.elem = document.getElementById('palette');
 view.palette.elem.width = 61;
 view.palette.elem.height = 401;
 
@@ -107,9 +108,9 @@ view.drawClick = function(event){
 		};
 	
 		// We have two drawing colours depending on mouse button.
-		if (mouseButton === 1){
+		if (mouse.button === 1){
 			pix.colour = view.palette.foreColour;
-		} else if (mouseButton === 3){
+		} else if (mouse.button === 3){
 			pix.colour = view.palette.backColour;
 		}
 
@@ -165,18 +166,18 @@ $("#pixdraw").bind("contextmenu", function(e) {
 
 
 $('#pixdraw').mousedown(function(event){
-	mouseDown = true;
-	mouseButton = event.which;
+	mouse.down = true;
+	mouse.button = event.which;
 	view.drawClick(event);
 });
 
 $('#pixdraw').mouseup(function(){
-	mouseDown = false;
-	mouseButton = false;
+	mouse.down = false;
+	mouse.button = false;
 });
 
 $('#pixdraw').mousemove(function(event){
-	if (mouseDown === true){
+	if (mouse.down === true){
 		view.drawClick(event);
 	}
 });
