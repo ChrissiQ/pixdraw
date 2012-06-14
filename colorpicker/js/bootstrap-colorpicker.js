@@ -227,7 +227,9 @@
 			var offset = this.component ? this.component.offset() : this.element.offset();
 			this.picker.css({
 				top: offset.top + this.height,
-				left: offset.left
+				left: offset.left,
+				position: 'absolute',
+				'z-index': 5
 			});
 		},
 		

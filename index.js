@@ -1,18 +1,6 @@
-/**$.fn.jPicker.defaults = {
-	images: {
-		clientPath: '/pixdraw/jPicker/images/', /* Path to image files */ /*
-	}
-};*/
-
-function componentToHex(c) {
-    hex: c.toString(16);
-    return hex.length == 1 ? "0" + hex : hex;
+function objToRGBA(obj){
+	return 'rgba(' + obj.r + ',' + obj.g + ',' + obj.b + ',' + obj.a + ')';
 }
-
-function rgbToHex(r, g, b) {
-    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-}
-
 var mouse = {
 	down: false,
 	button: 0
@@ -200,13 +188,15 @@ $('#drawer').mousedown(function(){
 	
 });
 
-//$('#fore').jPicker({ window: { expandable: true }, color: {alphaSupport: true}})
+$('#fore').colorpicker({format: 'rgba'}).on('changeColor', function(event){
+	view.palette.foreColour = objToRGBA(event.color.toRGB());
+	$('#fore').css({'background-color': objToRGBA(event.color.toRGB())});
+});
 
-/*$('#back').CanvasColorPicker({onColorChange: function(RGB, HSB){
-	  // RGB, current color in rgb format: {r,g,b}
-      // HSB: current color in hsb format: {h,s,b}
-      view.palette.backColour = rgbToHex(RGB.r,RGB.g,RGB.b);
-}});*/
+$('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
+	view.palette.backColour = objToRGBA(event.color.toRGB());
+	$('#back').css({'background-color': objToRGBA(event.color.toRGB())});
+});
 
 $(window).resize(function(){
 	view.width = $(window).width();
