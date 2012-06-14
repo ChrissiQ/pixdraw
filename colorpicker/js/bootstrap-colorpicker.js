@@ -195,7 +195,8 @@
 		},
 		
 		update: function(){
-			this.color = new Color(this.isInput ? this.element.prop('value') : this.element.data('color'));
+			// Update by Chrissi:  Did not want to use input elements.  Using divs, takes background color.
+			this.color = new Color(this.element.css('background-color'));
 			this.picker.find('i')
 				.eq(0).css({left: this.color.value.s*100, top: 100 - this.color.value.b*100}).end()
 				.eq(1).css('top', 100 * (1 - this.color.value.h)).end()
