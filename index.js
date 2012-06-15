@@ -22,8 +22,7 @@ function RGBAToObj(rgba){
 	return obj;
 }
 
-// Adds two pixels together based on opacity.
-// Assumes two objects with r,g,b,a properties.
+// Addditive colouring between background and new colour.
 function aOverB(a,b){
 	var aObj = {};
 	var bObj = {};
@@ -39,7 +38,7 @@ function aOverB(a,b){
 	
 	if (typeof b == 'string'){
 		bObj = RGBAToObj(b);
-	} else {
+	} else if (typeof b == 'object'){
 		bObj.r = b.r/255;
 		bObj.g = b.g/255;
 		bObj.b = b.b/255;
@@ -202,7 +201,8 @@ $("#pixdraw").bind('mousewheel', function(event, delta) {
 	view.draw();
 });
 
-// This enables you to draw in the background colour without the context menu getting in the way when you right-click.
+// This enables you to draw in the background colour without the 
+// context menu getting in the way when you right-click.
 $("#pixdraw").bind("contextmenu", function(e) {
     return false;
 });
@@ -225,17 +225,9 @@ $('#pixdraw').mousemove(function(event){
 	}
 });
 
-$('#mover').mousedown(function(){
-
-	view.palette.mode = "move";
-
-});
-
-$('#drawer').mousedown(function(){
-
-	view.palette.mode = "draw";
-	
-});
+$('#mover').mousedown(function(){view.palette.mode = "move";});
+$('#drawer').mousedown(function(){view.palette.mode = "draw";});
+$('#eraser').mousedown(function(){view.palette.mode = "erase";});
 
 $('#fore').css({'background-color': view.palette.foreColour});
 $('#back').css({'background-color': view.palette.backColour});
