@@ -1,6 +1,58 @@
 function objToRGBA(obj){
 	return 'rgba(' + obj.r + ',' + obj.g + ',' + obj.b + ',' + obj.a + ')';
 }
+
+// Takes RGBA string and turns it into object (with r,g,b,a properties).
+// Assumes RGB [0,255] and A [0,1] and returns object RGBA [0,1].
+function RGBAToObj(rgba){
+	var obj = {};
+	var sliced = rgba.concat("");
+	sliced = sliced.substr(sliced.indexOf('(')+1, ((sliced.indexOf(')'))-5));	
+	obj.r = (sliced.substr(0, sliced.indexOf(',')))/255;
+
+	sliced = sliced.substr(sliced.indexOf(',')+1);
+	obj.g = (sliced.substr(0, sliced.indexOf(',')))/255;
+
+	sliced = sliced.substr(sliced.indexOf(',')+1);
+	obj.b = (sliced.substr(0, sliced.indexOf(',')))/255;
+
+	sliced = sliced.substr(sliced.indexOf(',')+1);
+	obj.a = sliced;
+	
+	return obj;
+}
+
+// Adds two pixels together based on opacity.
+// Assumes two objects with r,g,b,a properties.
+function aOverB(a,b){
+	var aObj = {};
+	var bObj = {};
+	
+	if (typeof a == 'string'){
+		aObj = RGBAToObj(a);
+	} else if (typeof a == 'object'){
+		aObj.r = a.r/255;
+		aObj.g = a.g/255;
+		aObj.b = a.b/255;
+		aObj.a = a.a;
+	};
+	
+	if (typeof b == 'string'){
+		bObj = RGBAToObj(b);
+	} else {
+		bObj.r = b.r/255;
+		bObj.g = b.g/255;
+		bObj.b = b.b/255;
+		bObj.a = b.a;
+	};
+	var alpha = 1 - (1 - aObj.a) * (1 - bObj.a);
+	return objToRGBA({
+		a: alpha,
+		r: Math.round((aObj.r * aObj.a / alpha + bObj.r * bObj.a * (1 - aObj.a) / alpha)*255),
+		g: Math.round((aObj.g * aObj.a / alpha + bObj.g * bObj.a * (1 - aObj.a) / alpha)*255),
+		b: Math.round((aObj.b * aObj.a / alpha + bObj.b * bObj.a * (1 - aObj.a) / alpha)*255)
+	});
+}
 var mouse = {
 	down: false,
 	button: 0
@@ -57,15 +109,12 @@ view.ctx.strokeStyle = "#888888";
 		view.ctx.stroke();
 	}
 	// Draw pixels.
-	var pixel = {};
 	if (image && image.map){
 		for (k=0;k<image.map.length;k++){
-			pixel = {
+			view.drawPixel({
 				x: (image.origin.x + image.map[k].x)*view.scale,
 				y: (image.origin.y + image.map[k].y)*view.scale,
-				colour: image.map[k].colour
-			};
-			view.drawPixel(pixel);
+				colour: image.map[k].colour});
 		}
 	}
 };
@@ -78,6 +127,7 @@ view.drawClick = function(event){
 	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
 				y: Math.floor(click.y/view.scale)*view.scale};
 	var coord;
+	var oldCoord = {};
 
 	// Our program has different modes.  If the mode is drawing, we are
 	// going to draw pixels.
@@ -107,15 +157,14 @@ view.drawClick = function(event){
 		// Find out whether the pixel exists already.  We don't want
 		// to have multiple of the same pixel when it is clicked again.
 		for (i=0;i<image.map.length;i++){
-			if (image.map[i].x == coord.x && image.map[i].y == coord.y){
-				// If the new pixel is a different colour than the old one, 
-				// remove the old one.
-				if (image.map[i].colour != pix.colour){
-					image.map.splice(i,1);
-					view.clearPixel(pix);					
-				} else {
-					coord.exists = true;
-				}
+			if (image.map[i].x == coord.x && image.map[i].y == coord.y){				
+				coord.exists = true;
+				view.clearPixel(pix);
+				image.map[i].colour = aOverB(pix.colour,image.map[i].colour);
+				view.drawPixel({
+					x: pix.x,
+					y: pix.y,
+					colour: image.map[i].colour});
 				break;
 			}
 		}
@@ -187,6 +236,9 @@ $('#drawer').mousedown(function(){
 	view.palette.mode = "draw";
 	
 });
+
+$('#fore').css({'background-color': view.palette.foreColour});
+$('#back').css({'background-color': view.palette.backColour});
 
 $('#fore').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 	view.palette.foreColour = objToRGBA(event.color.toRGB());

@@ -230,7 +230,8 @@
 				top: offset.top + this.height,
 				left: offset.left,
 				position: 'absolute',
-				'z-index': 5
+				'z-index': 5,
+				visibility: 'visible'
 			});
 		},
 		
