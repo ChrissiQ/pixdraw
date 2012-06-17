@@ -268,6 +268,17 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 	$('#back').css({'background-color': objToRGBA(event.color.toRGB())});
 });
 
+$('#palette').mousedown(function(){
+	mouse.down = true;
+	if (view.mode == "move"){
+		
+	}
+});
+$('#palette').mouseup(function(){
+	mouse.down = false;
+	
+});
+
 $(window).resize(function(){
 	view.width = $(window).width();
 	view.height = $(window).height();
