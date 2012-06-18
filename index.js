@@ -50,7 +50,9 @@ function aOverB(a,b){
 }
 var mouse = {
 	down: false,
-	button: 0
+	button: 0,
+	moving: false,
+	position: {}
 };
 var image = {map: [], origin: {}};
 	
@@ -60,6 +62,10 @@ var view = {
 	height: $(window).height(),
 	grid: true,
 	mode: "draw",
+	movementOffset: {
+		x: 0,
+		y: 0
+	},
 	
 	palette: {
 		x: 49,
@@ -88,16 +94,38 @@ $(view.palette.elem).css('top', view.palette.x);
 $(view.palette.elem).css('left', view.palette.y);
 
 view.draw = function(){	
+	view.ctx.clearRect(0,0,view.width, view.height);
 	view.ctx.strokeStyle = "#888888";
 
 	if (view.grid == true){
+	
 		// Draw grid: vertical lines
 		for (i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
-			view.drawLine({x:i,y:-0.5},{x:i,y:view.canvas.height-0.5},'rgba(200,200,200,1)');
+			view.drawLine(
+				{
+					x:i+(view.movementOffset.x % view.scale),
+					y:-0.5
+				},
+				{
+					x:i+(view.movementOffset.x % view.scale),
+					y:view.canvas.height-0.5
+				},
+				'rgba(200,200,200,1)'
+			);
 		}
 		// Draw grid: horizontal lines
 		for (j=-0.5;j<view.canvas.height-0.5;j+=view.scale){
-			view.drawLine({x:-0.5,y:j},{x:view.canvas.width-0.5,y:j},'rgba(200,200,200,1)');
+			view.drawLine(
+				{
+					x:-0.5,
+					y:j + (view.movementOffset.y % view.scale)
+				},
+				{
+					x:view.canvas.width-0.5,
+					y:j + (view.movementOffset.y % view.scale)
+				},
+				'rgba(200,200,200,1)'
+			);
 		}
 	}
 	// Draw pixels.
@@ -113,7 +141,7 @@ view.draw = function(){
 view.drawLine = function(start,end,colour){
 	view.ctx.strokeStyle = colour;
 	view.ctx.beginPath();
-	view.ctx.moveTo(start.x,start.y);
+	view.ctx.moveTo(start.x, start.y);
 	view.ctx.lineTo(end.x,end.y);
 	view.ctx.closePath();
 	view.ctx.stroke();
@@ -127,7 +155,9 @@ view.drawClick = function(event){
 				y: Math.floor(click.y/view.scale)*view.scale};
 	var coord;
 
-	// If no pixels have been drawn, this is the origin.
+	// If no pixels have been drawn, the origin becomes
+	// x: nth pixel from left
+	// y: mth pixel from top
 	if (!image.map[0]){
 		image.origin.x = Math.floor(pix.x/view.scale);
 		image.origin.y = Math.floor(pix.y/view.scale);
@@ -171,6 +201,14 @@ view.drawClick = function(event){
 }	
 
 view.move = function(event){
+	if (mouse.moving == "grid"){
+		// Move the view!
+		view.movementOffset.x += event.clientX - mouse.position.x;
+		view.movementOffset.y += event.clientY - mouse.position.y;
+		view.draw();
+		
+		mouse.position = {x: event.clientX, y: event.clientY};
+	}
 }
 view.erase = function(event){
 	// Coordinates of click.
@@ -235,20 +273,28 @@ $("#pixdraw").bind("contextmenu", function(e) {
 
 
 $('#pixdraw').mousedown(function(event){
+	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
 	mouse.button = event.which;
+	if (view.mode == "move"){
+		mouse.moving = "grid";
+	}
 	view.processClick(event);
 });
 
 $('#pixdraw').mouseup(function(){
 	mouse.down = false;
 	mouse.button = false;
+	mouse.moving = false;
 });
 
 $('#pixdraw').mousemove(function(event){
-	if (mouse.down === true){
+	if (view.mode == "draw" && mouse.down === true){
 		view.processClick(event);
 	}
+	if (view.mode == "move" && mouse.down == "true"){
+		mouse.moving = "grid";
+		mouse.move();
 });
 
 $('#mover').mousedown(function(){view.mode = "move";});
@@ -268,15 +314,31 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 	$('#back').css({'background-color': objToRGBA(event.color.toRGB())});
 });
 
-$('#palette').mousedown(function(){
+$('#palette').mousedown(function(event){
+	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
-	if (view.mode == "move"){
-		
-	}
+	
 });
 $('#palette').mouseup(function(){
-	mouse.down = false;
+	mouse.down = false;	
+	mouse.moving = false;
+});
+$('#palette').mousemove(function(event){
+	mouse.moving = "palette";
+});
+$(window).mousemove(function(event){
+	if (mouse.down && mouse.moving == "palette" && view.mode == "move"){
+		view.palette.x+= event.clientX - mouse.position.x;
+		view.palette.y+= event.clientY - mouse.position.y;
+			
+		mouse.position = {x: event.clientX, y: event.clientY};
+			
+		$('#palette').css({'top': view.palette.y, 'left': view.palette.x});
+	}
+	if (mouse.down && mouse.moving == "grid" && view.mode == "move"){
 	
+	}
+
 });
 
 $(window).resize(function(){
