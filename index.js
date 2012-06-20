@@ -149,7 +149,7 @@ view.drawLine = function(start,end,colour){
 view.drawClick = function(event){
 
 	// Coordinates of click.
-	var click = {x: event.clientX, y: event.clientY};
+	var click = {x: event.clientX - view.movementOffset.x, y: event.clientY - view.movementOffset.y};
 	// Top left corner of pixel square.
 	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
 				y: Math.floor(click.y/view.scale)*view.scale};
@@ -239,7 +239,7 @@ view.clearPixel = function(pix){
 	var offset = 1
 	if (view.grid == false) offset = 0;
 	// Erase pixel, not grid.
-	view.ctx.clearRect(pix.x, pix.y, view.scale-offset, view.scale-offset);
+	view.ctx.clearRect(pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, view.scale-offset, view.scale-offset);
 }
 view.draw();
 
