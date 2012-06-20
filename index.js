@@ -233,7 +233,7 @@ view.drawPixel = function(pix){
 	var offset = 1;
 	// Draw pixel inside the grid bounds (1 pixel inside).
 	if (view.grid == false) offset = 0;
-	view.ctx.fillRect(pix.x, pix.y, view.scale-offset, view.scale-offset);
+	view.ctx.fillRect(pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, view.scale-offset, view.scale-offset);
 }	
 view.clearPixel = function(pix){
 	var offset = 1
