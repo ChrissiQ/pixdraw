@@ -62,7 +62,7 @@ var view = {
 	height: $(window).height(),
 	grid: true,
 	mode: "draw",
-	movementOffset: {
+	movementOffset: {	// Used when mouse moves.
 		x: 0,
 		y: 0
 	},
@@ -241,29 +241,8 @@ view.clearPixel = function(pix){
 	// Erase pixel, not grid.
 	view.ctx.clearRect(pix.x, pix.y, view.scale-offset, view.scale-offset);
 }
-view.processClick = function(event){
-	if (view.mode == "draw"){
-		view.drawClick(event);
-	} else if (view.mode == "move"){
-		view.move(event);
-	} else if (view.mode == "erase"){
-		view.erase(event);
-	};
-};
-
 view.draw();
 
-$("#pixdraw").bind('mousewheel', function(event, delta) {
-// Determine which way the mouse wheel spun, and scale the page.
-	if (delta > 0){
-		if (view.scale<100) view.scale++;
-	} else if (delta < 0){
-		if (view.scale>1) view.scale--;
-	}
-
-	view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
-	view.draw();
-});
 
 // This enables you to draw in the background colour without the 
 // context menu getting in the way when you right-click.
@@ -271,37 +250,7 @@ $("#pixdraw").bind("contextmenu", function(e) {
     return false;
 });
 
-
-$('#pixdraw').mousedown(function(event){
-	mouse.position = {x: event.clientX, y: event.clientY};
-	mouse.down = true;
-	mouse.button = event.which;
-	if (view.mode == "move"){
-		mouse.moving = "grid";
-	}
-	view.processClick(event);
-});
-
-$('#pixdraw').mouseup(function(){
-	mouse.down = false;
-	mouse.button = false;
-	mouse.moving = false;
-});
-
-$('#pixdraw').mousemove(function(event){
-	if (view.mode == "draw" && mouse.down === true){
-		view.processClick(event);
-	}
-	if (view.mode == "move" && mouse.down === true){
-		mouse.moving = "grid";
-		view.move(event);
-	}
-});
-
-$('#mover').mousedown(function(){view.mode = "move";});
-$('#drawer').mousedown(function(){view.mode = "draw";});
-$('#eraser').mousedown(function(){view.mode = "erase";});
-
+// Colour picker!
 $('#fore').css({'background-color': view.palette.foreColour});
 $('#back').css({'background-color': view.palette.backColour});
 
@@ -315,33 +264,98 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 	$('#back').css({'background-color': objToRGBA(event.color.toRGB())});
 });
 
+
+
+// Mousedown bindings.
+$('#mover').mousedown(function(){view.mode = "move";});
+$('#drawer').mousedown(function(){view.mode = "draw";});
+$('#eraser').mousedown(function(){view.mode = "erase";});
+$('#pixdraw').mousedown(function(event){
+	mouse.position = {x: event.clientX, y: event.clientY};
+	mouse.down = true;
+	mouse.button = event.which;
+	mouse.moving = "grid";
+	if (view.mode == "draw"){
+		view.drawClick(event);
+	} else if (view.mode == "move"){
+		view.move(event);
+	} else if (view.mode == "erase"){
+		view.erase(event);
+	};
+});
 $('#palette').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
+	if (view.mode == "move"){
+		mouse.moving = "palette";
+	}
 	
+});
+
+
+// Mouseup bindings.
+$('#pixdraw').mouseup(function(){
+	mouse.down = false;
+	mouse.button = false;
+	mouse.moving = false;
 });
 $('#palette').mouseup(function(){
 	mouse.down = false;	
 	mouse.moving = false;
 });
-$('#palette').mousemove(function(event){
-	mouse.moving = "palette";
-});
+
+// Mousemove binding.
 $(window).mousemove(function(event){
-	if (mouse.down && mouse.moving == "palette" && view.mode == "move"){
-		view.palette.x+= event.clientX - mouse.position.x;
-		view.palette.y+= event.clientY - mouse.position.y;
+
+	if (mouse.down){
+	
+
+		if (view.mode === "move"){
+			if (mouse.moving === "palette"){
+				view.palette.x+= event.clientX - mouse.position.x;
+				view.palette.y+= event.clientY - mouse.position.y;
 			
-		mouse.position = {x: event.clientX, y: event.clientY};
+				mouse.position = {x: event.clientX, y: event.clientY};
 			
-		$('#palette').css({'top': view.palette.y, 'left': view.palette.x});
-	}
-	if (mouse.down && mouse.moving == "grid" && view.mode == "move"){
+				$('#palette').css({'top': view.palette.y, 'left': view.palette.x});
+			}
+			if (mouse.moving === "grid"){	
+				view.move(event);
+			}
+		}
+		
+		
+		if (view.mode === "draw"){
+			if (mouse.moving === "grid"){
+				view.drawClick(event);
+			}
+		}
+		
+		
+		if (view.mode == "erase"){
+			if (mouse.moving === "grid"){
+				view.erase(event);
+			}
+		}
 	
 	}
 
 });
 
+// Mousewheel binding.
+$("#pixdraw").bind('mousewheel', function(event, delta) {
+// Determine which way the mouse wheel spun, and scale the page.
+	if (delta > 0){
+		if (view.scale<100) view.scale++;
+	} else if (delta < 0){
+		if (view.scale>1) view.scale--;
+	}
+
+	view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
+	view.draw();
+});
+
+// Resize binding.
 $(window).resize(function(){
 	view.width = $(window).width();
 	view.height = $(window).height();
