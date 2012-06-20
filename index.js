@@ -292,9 +292,10 @@ $('#pixdraw').mousemove(function(event){
 	if (view.mode == "draw" && mouse.down === true){
 		view.processClick(event);
 	}
-	if (view.mode == "move" && mouse.down == "true"){
+	if (view.mode == "move" && mouse.down === true){
 		mouse.moving = "grid";
-		mouse.move();
+		view.move(event);
+	}
 });
 
 $('#mover').mousedown(function(){view.mode = "move";});
