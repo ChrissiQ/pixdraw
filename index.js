@@ -97,7 +97,7 @@ view.draw = function(){
 	view.ctx.clearRect(0,0,view.width, view.height);
 	view.ctx.strokeStyle = "#888888";
 
-	if (view.grid == true){
+	if (view.grid){
 	
 		// Draw grid: vertical lines
 		for (i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
@@ -212,7 +212,7 @@ view.move = function(event){
 }
 view.erase = function(event){
 	// Coordinates of click.
-	var click = {x: event.clientX, y: event.clientY};
+	var click = {x: event.clientX - view.movementOffset.x, y: event.clientY - view.movementOffset.y};
 	// Top left corner of pixel square.
 	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
 				y: Math.floor(click.y/view.scale)*view.scale};
@@ -270,6 +270,7 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
+$('#toggle-grid').mousedown(function(){view.grid = !view.grid; view.draw();});
 $('#pixdraw').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
@@ -291,7 +292,6 @@ $('#palette').mousedown(function(event){
 	}
 	
 });
-
 
 // Mouseup bindings.
 $('#pixdraw').mouseup(function(){

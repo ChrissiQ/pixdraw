@@ -60,6 +60,15 @@ body{
 	height: 25px;
 	border: 1px solid black;
 }
+#toggle-grid{
+	position: relative;
+	float: left;
+	top: 15px;
+	left: 10px;
+	width: 25px;
+	height: 25px;
+	border: 1px solid black;
+}
 .colorpicker{
 	position: absolute;
 	z-index: -1;
