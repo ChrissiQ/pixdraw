@@ -54,7 +54,12 @@ var mouse = {
 	moving: false,
 	position: {}
 };
-var image = {map: [], origin: {}};
+var image = {
+	map: [], 
+	origin: {}, 
+	topLeft: {x: 1, y: 1}, 
+	bottomRight: {x: 0, y: 0}
+};
 	
 var view = {
 	scale: 25,
@@ -65,18 +70,19 @@ var view = {
 	movementOffset: {	// Used when mouse moves.
 		x: 0,
 		y: 0
-	},
-	
+	},	
 	palette: {
 		x: 49,
 		y: 49,
 		backColour: "rgba(0,0,0,0.2)",
 		foreColour: "rgba(255,0,0,0.2)",
-	}
+	},
+	canvas: document.getElementById('pixdraw'),
+	sharing: false,
+	topLeft: {x: 0, y: 0}
 };
 
 // Set the size of the canvas element.  Literally.
-view.canvas = document.getElementById('pixdraw');
 view.canvas.width = view.width-1;
 view.canvas.height = view.height-5;
 
@@ -132,8 +138,8 @@ view.draw = function(){
 	if (image && image.map){
 		for (k=0;k<image.map.length;k++){
 			view.drawPixel({
-				x: (image.origin.x + image.map[k].x)*view.scale,
-				y: (image.origin.y + image.map[k].y)*view.scale,
+				x: (image.origin.x + image.map[k].x)*view.scale - view.topLeft.x,
+				y: (image.origin.y + image.map[k].y)*view.scale - view.topLeft.y,
 				colour: image.map[k].colour});
 		}
 	}
@@ -149,10 +155,15 @@ view.drawLine = function(start,end,colour){
 view.drawClick = function(event){
 
 	// Coordinates of click.
-	var click = {x: event.clientX - view.movementOffset.x, y: event.clientY - view.movementOffset.y};
+	var click = {
+		x: event.clientX - view.movementOffset.x, 
+		y: event.clientY - view.movementOffset.y
+	};
 	// Top left corner of pixel square.
-	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
-				y: Math.floor(click.y/view.scale)*view.scale};
+	var pix = {
+		x: Math.floor(click.x/view.scale)*view.scale - view.topLeft.x,
+		y: Math.floor(click.y/view.scale)*view.scale - view.topLeft.y
+	};
 	var coord;
 
 	// If no pixels have been drawn, the origin becomes
@@ -196,6 +207,10 @@ view.drawClick = function(event){
 	// If it doesn't exist, create a new one!
 	if (coord.exists == false){
 		image.map.push({x: coord.x, y: coord.y, colour: pix.colour});
+		if (image.topLeft.x > coord.x) image.topLeft.x = coord.x;
+		if (image.topLeft.y > coord.y) image.topLeft.y = coord.y;
+		if (image.bottomRight.x < coord.x) image.bottomRight.x = coord.x;
+		if (image.bottomRight.y < coord.y) image.bottomRight.y = coord.y;
 		view.drawPixel(pix);
 	}
 }	
@@ -212,35 +227,87 @@ view.move = function(event){
 }
 view.erase = function(event){
 	// Coordinates of click.
-	var click = {x: event.clientX - view.movementOffset.x, y: event.clientY - view.movementOffset.y};
+	var click = {
+		x: event.clientX - view.movementOffset.x, 
+		y: event.clientY - view.movementOffset.y
+	};
 	// Top left corner of pixel square.
 	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
 				y: Math.floor(click.y/view.scale)*view.scale};
 	coord = {
 		x: Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-		y: Math.floor((click.y-(image.origin.y*view.scale))/view.scale)}
+		y: Math.floor((click.y-(image.origin.y*view.scale))/view.scale)
+	};
+	
+	// Reset the corner finder, as we are about to re-search for corners.
+	image.topLeft = {x: 1, y: 1};
+	image.bottomRight = {x: 0, y: 0};
+		
 	
 	for (i=0;i<image.map.length;i++){
 		if (image.map[i].x == coord.x && image.map[i].y == coord.y){
 			image.map.splice(i,1);	
 			view.clearPixel(pix);
+		} else {
+			if (image.topLeft.x > image.map[i].x) image.topLeft.x = image.map[i].x;
+			if (image.topLeft.y > image.map[i].y) image.topLeft.y = image.map[i].y;
+			if (image.bottomRight.x < image.map[i].x) image.bottomRight.x = image.map[i].x;
+			if (image.bottomRight.y < image.map[i].y) image.bottomRight.y = image.map[i].y;
 		}
 	}
 }
 
 view.drawPixel = function(pix){
 	view.ctx.fillStyle = pix.colour;
-	var offset = 1;
+	var grid = 1;
 	// Draw pixel inside the grid bounds (1 pixel inside).
-	if (view.grid == false) offset = 0;
-	view.ctx.fillRect(pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, view.scale-offset, view.scale-offset);
+	if (view.grid == false) grid = 0;
+	view.ctx.fillRect(
+		pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, 
+		view.scale-grid, view.scale-grid
+	);
 }	
 view.clearPixel = function(pix){
 	var offset = 1
 	if (view.grid == false) offset = 0;
 	// Erase pixel, not grid.
-	view.ctx.clearRect(pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, view.scale-offset, view.scale-offset);
+	view.ctx.clearRect(
+		pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, 
+		view.scale-offset, view.scale-offset
+	);
 }
+
+view.share = function(){
+	var size = {
+		x: image.bottomRight.x - image.topLeft.x + 1,
+		y: image.bottomRight.y - image.topLeft.y + 1
+	};
+	if (view.sharing){
+		console.log((image.origin.x + image.topLeft.x) * view.scale);
+		view.canvas.width = size.x*view.scale;
+		view.canvas.height = size.y*view.scale;
+		$('#pixdraw').css({
+			'top':50,'left':150,
+			'position':'absolute','border':'1px solid black'
+		});
+		
+		view.topLeft = {
+			x: (image.origin.x+ image.topLeft.x) * view.scale,
+			y: (image.origin.y+ image.topLeft.y) * view.scale
+		};
+	} else {
+		view.canvas.width = view.width;
+		view.canvas.height = view.height;
+		$('#pixdraw').css({
+			'top':0,'left':0,
+			'position':'absolute','border':0
+		});
+		view.topLeft = {x:0,y:0};
+	}
+	view.draw();
+	//window.location = view.canvas.toDataURL("image/png");
+}
+
 view.draw();
 
 
@@ -267,12 +334,14 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 
 
 // Mousedown bindings.
+$('#share').mousedown(function(){view.sharing = !view.sharing; view.share()});
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
 $('#toggle-grid').mousedown(function(){view.grid = !view.grid; view.draw();});
 $('#pixdraw').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
+	console.log(mouse.position.x, mouse.position.y);
 	mouse.down = true;
 	mouse.button = event.which;
 	mouse.moving = "grid";
@@ -328,6 +397,7 @@ $(window).mousemove(function(event){
 		if (view.mode === "draw"){
 			if (mouse.moving === "grid"){
 				view.drawClick(event);
+				mouse.position = {x: event.clientX, y: event.clientY};
 			}
 		}
 		

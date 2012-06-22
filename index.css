@@ -69,6 +69,21 @@ body{
 	height: 25px;
 	border: 1px solid black;
 }
+#share{
+	position: relative;
+	float: left;
+	top: 20px;
+	left: 5px;
+	width: 55px;
+	height: 25px;
+	border: 1px solid black;
+}
+#share div{
+	overflow: scroll;
+	background-color: white;
+	border: 1px solid black;
+	width: 600px;
+}
 .colorpicker{
 	position: absolute;
 	z-index: -1;
