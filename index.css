@@ -15,66 +15,13 @@ body{
 	height: 401px;
 	background-color: white;
 }
-#fore{
+#palette div{
 	position: relative;
+	float: left;
 	top: 5px;
 	left: 5px;
-	width: 58px;
-	height: 25px;
-	border: 1px solid black;
-	border-bottom: 0;
-}
-#back{
-	position: relative;
-	top: 5px;
-	left: 5px;
-	width: 58px;
-	height: 25px;
-	border: 1px solid black;
-	border-top: 0;
-}
-#mover{
-	position: relative;
-	float: left;
-	top: 10px;
-	left: 5px;
+	margin: 2px;
 	width: 25px;
-	height: 25px;
-	border: 1px solid black;
-}
-#drawer{
-	position: relative;
-	float: left;
-	top: 10px;
-	left: 10px;
-	width: 25px;
-	height: 25px;
-	border: 1px solid black;
-}
-#eraser{
-	position: relative;
-	float: left;
-	top: 15px;
-	left: 5px;
-	width: 25px;
-	height: 25px;
-	border: 1px solid black;
-}
-#toggle-grid{
-	position: relative;
-	float: left;
-	top: 15px;
-	left: 10px;
-	width: 25px;
-	height: 25px;
-	border: 1px solid black;
-}
-#share{
-	position: relative;
-	float: left;
-	top: 20px;
-	left: 5px;
-	width: 55px;
 	height: 25px;
 	border: 1px solid black;
 }

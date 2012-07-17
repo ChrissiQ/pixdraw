@@ -1,3 +1,5 @@
+// Helper function that converts an object with r,g,b,a properties to a string
+// of rgba(r,g,b,a) format
 function objToRGBA(obj){
 	return 'rgba(' + obj.r + ',' + obj.g + ',' + obj.b + ',' + obj.a + ')';
 }
@@ -19,6 +21,7 @@ function RGBAToObj(rgba){
 }
 
 // Addditive colouring between background and new colour.
+// Can handle objects or strings of rgba.
 function aOverB(a,b){
 	var aObj = {};
 	var bObj = {};
@@ -48,14 +51,18 @@ function aOverB(a,b){
 		b: Math.round((aObj.b * aObj.a / alpha + bObj.b * bObj.a * (1 - aObj.a) / alpha)*255)
 	});
 }
+// Current status of the mouse.  Only updated when needed.
 var mouse = {
 	down: false,
 	button: 0,
 	moving: false,
 	position: {}
 };
+
+// Holds data about the image being constructed by the user.
 var image = {
 	map: [], 
+	lastMap: [],
 	origin: {}, 
 	topLeft: {x: 1, y: 1}, 
 	bottomRight: {x: 0, y: 0}
@@ -156,8 +163,8 @@ view.drawClick = function(event){
 
 	// Coordinates of click.
 	var click = {
-		x: event.clientX - view.movementOffset.x, 
-		y: event.clientY - view.movementOffset.y
+		x: event.offsetX - view.movementOffset.x, 
+		y: event.offsetY - view.movementOffset.y
 	};
 	// Top left corner of pixel square.
 	var pix = {
@@ -257,6 +264,11 @@ view.erase = function(event){
 	}
 }
 
+view.undo = function(){
+ newgrid = oldgrid
+ draw
+}
+
 view.drawPixel = function(pix){
 	view.ctx.fillStyle = pix.colour;
 	var grid = 1;
@@ -283,7 +295,7 @@ view.share = function(){
 		y: image.bottomRight.y - image.topLeft.y + 1
 	};
 	if (view.sharing){
-		console.log((image.origin.x + image.topLeft.x) * view.scale);
+		//console.log((image.origin.x + image.topLeft.x) * view.scale);
 		view.canvas.width = size.x*view.scale;
 		view.canvas.height = size.y*view.scale;
 		$('#pixdraw').css({
@@ -305,7 +317,32 @@ view.share = function(){
 		view.topLeft = {x:0,y:0};
 	}
 	view.draw();
-	//window.location = view.canvas.toDataURL("image/png");
+	if (view.sharing)
+		share.upload(view.canvas.toDataURL('image/png').split(',')[1]);
+}
+
+share = {
+	upload: function(image){
+	
+	 $.ajax({
+        url: 'http://api.imgur.com/2/upload.json',
+        type: 'POST',
+        data: {
+        	type: 'image/png;base64',
+            key: '24d00bbfcd3d433095c97d48a4b10ebd',
+            name: 'neon.jpg',
+            title: 'test title',
+            caption: 'test caption',
+            'image': image
+        },
+        dataType: 'json'
+    }).success(function(data) {
+    	console.log(data);
+        //console.log(data['upload']['links']['imgur_page']);
+    }).error(function(data) {
+        console.log(data);
+    });
+	}
 }
 
 view.draw();
@@ -334,14 +371,18 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 
 
 // Mousedown bindings.
-$('#share').mousedown(function(){view.sharing = !view.sharing; view.share()});
+$('#share').mousedown(function(){
+	view.sharing = !view.sharing; 
+	view.share();
+	
+});
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
 $('#toggle-grid').mousedown(function(){view.grid = !view.grid; view.draw();});
 $('#pixdraw').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
-	console.log(mouse.position.x, mouse.position.y);
+	//console.log(mouse.position.x, mouse.position.y);
 	mouse.down = true;
 	mouse.button = event.which;
 	mouse.moving = "grid";
