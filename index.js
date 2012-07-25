@@ -507,7 +507,7 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 //	view.sharing = !view.sharing; 
 //	view.share();
 	
-});
+//});
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
