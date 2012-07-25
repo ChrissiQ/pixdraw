@@ -62,11 +62,166 @@ var mouse = {
 // Holds data about the image being constructed by the user.
 var image = {
 	map: [], 
-	lastMap: [],
+	buffer: [],
+	stateLog: [],
+	state: -1,
 	origin: {}, 
 	topLeft: {x: 1, y: 1}, 
 	bottomRight: {x: 0, y: 0}
 };
+
+
+// Takes a pixel object with properties x, y, colour and undoColour.
+image.addToStateLog = function(pixel){
+	var existsInCurrentState = false;
+	// If the state is empty, prep it for adding pixels.
+	if (!image.stateLog[image.state]) {
+		image.stateLog[image.state] = [];
+		
+	// If it is not empty, check if it already exists and just change colour if so.
+	} else {
+		for (var j=0;j<image.stateLog[image.state].length;j++){
+			if (
+				image.stateLog[image.state][j].x == pixel.x && 
+				image.stateLog[image.state][j].y == pixel.y
+			){
+				existsInCurrentState = true;	
+						
+				// If the pixel colour is false, erase it.
+				if (pixel.colour === false){
+					image.stateLog[image.state][j].colour = false;			
+				// If the pixel has a colour, combine with previous colour.
+				} else {
+					image.stateLog[image.state][j].colour = 
+						aOverB(pixel.colour, image.stateLog[image.state][j].colour);
+				}
+	
+				image.stateLog[image.state][j].undoColour = pixel.undoColour;
+				break;
+			}
+		}
+	}
+	
+	// If it does not exist yet, add it.
+	if (!existsInCurrentState) {
+		image.stateLog[image.state].push({
+			"x": pixel.x, "y": pixel.y, 
+			"colour": pixel.colour, "undoColour": pixel.undoColour
+		});
+	}
+};
+
+image.undo = function(){
+	// For each pixel in the current state,
+	for (var i=0;i<image.stateLog[image.state].length;i++){
+		
+		var mapElement = image.existsIn(image.stateLog[image.state][i], image.map);
+		
+		// If it doesn't exist, add a new one.
+		if (mapElement === -1){
+			if (image.stateLog[image.state][i].undoColour != false){
+				image.map.push({
+					"x": image.stateLog[image.state][i].x,
+					"y": image.stateLog[image.state][i].y,
+					"colour": image.stateLog[image.state][i].undoColour
+				});
+				view.drawPixel(image.map[image.map.length-1]);
+			}
+			
+		// If the pixel can be found on the map
+		} else {
+			// If the colour was changed, change it on the map.
+			if (image.stateLog[image.state][i].undoColour){
+				image.map[mapElement].colour = image.stateLog[image.state][i].undoColour;
+				view.clearPixel(image.map[mapElement]);
+				view.drawPixel(image.map[mapElement]);
+				
+			// If it was erased, erase it on the map.
+			} else {
+				view.clearPixel({"x": image.map[mapElement].x, "y": image.map[mapElement].y});
+				image.map.splice(mapElement,1);
+			}
+		}
+	}
+}
+
+image.redo = function(){
+	// For each pixel in the current state
+	for (var i=0;i<image.stateLog[image.state].length;i++){
+	
+		var mapElement = image.existsIn(image.stateLog[image.state][i], image.map);
+		
+		// If the pixel is already on the map, just modify it.
+		if (mapElement != -1){
+		
+			image.map[mapElement].colour = image.stateLog[image.state][i].colour;
+			
+		// If the pixel is not on the map, add it.
+		} else {
+			image.map.push({
+				"x": image.stateLog[image.state][i].x,
+				"y": image.stateLog[image.state][i].y,
+				"colour": image.stateLog[image.state][i].colour
+			});
+			mapElement = image.map.length-1;
+		}
+		
+		view.clearPixel(image.map[mapElement]);
+		view.drawPixel(image.map[mapElement]);
+		
+	}
+}
+
+image.existsIn = function(pixel, array){
+	for (var element in array){
+		if (array[element].x === pixel.x && array[element].y === pixel.y){
+			return element;
+		}
+	}
+	// Return -1 if not found in array
+	return -1;
+}
+image.addBufferToMap = function(){
+
+	for (var i=0; i<image.buffer.length; i++){
+		var mapElement = image.existsIn({"x": image.buffer[i].x, "y": image.buffer[i].y}, image.map);
+		var undoColour;	
+		// If the pixel doesn't exist on the map, push it to the map.
+		if (mapElement === -1){
+			undoColour = false;
+			image.map.push({
+				"x": image.buffer[i].x,
+				"y": image.buffer[i].y,
+				"colour": image.buffer[i].colour
+			});
+			
+		// If it does exist, change the colour.
+		} else {
+			undoColour = image.map[mapElement].colour;
+			image.map[mapElement].colour = aOverB(image.buffer[i].colour, image.map[mapElement].colour);
+		};
+		
+		// In all cases, add it to the state log.
+		image.addToStateLog({
+			"x": image.buffer[i].x,
+			"y": image.buffer[i].y,
+			"colour": image.buffer[i].colour,
+			"undoColour": undoColour
+		});
+	}
+	image.buffer = [];
+}
+
+
+image.addPixelToBuffer = function(pixel){
+	var pixelInBuffer = image.existsIn(pixel, image.buffer);
+	if (pixelInBuffer >= 0){
+		image.buffer[pixelInBuffer].colour = 
+			aOverB(pixel.colour, image.buffer[pixelInBuffer].colour);
+	} else {
+		image.buffer.push(pixel);
+	}
+}
 	
 var view = {
 	scale: 25,
@@ -106,14 +261,13 @@ view.palette.elem.height = 401;
 $(view.palette.elem).css('top', view.palette.x);
 $(view.palette.elem).css('left', view.palette.y);
 
-view.draw = function(){	
+view.redraw = function(){	
 	view.ctx.clearRect(0,0,view.width, view.height);
-	view.ctx.strokeStyle = "#888888";
 
 	if (view.grid){
 	
 		// Draw grid: vertical lines
-		for (i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
+		for (var i=-0.5;i<view.canvas.width-0.5;i+=view.scale){
 			view.drawLine(
 				{
 					x:i+(view.movementOffset.x % view.scale),
@@ -127,7 +281,7 @@ view.draw = function(){
 			);
 		}
 		// Draw grid: horizontal lines
-		for (j=-0.5;j<view.canvas.height-0.5;j+=view.scale){
+		for (var j=-0.5;j<view.canvas.height-0.5;j+=view.scale){
 			view.drawLine(
 				{
 					x:-0.5,
@@ -141,13 +295,16 @@ view.draw = function(){
 			);
 		}
 	}
-	// Draw pixels.
+	// Draw pixels from map.
 	if (image && image.map){
-		for (k=0;k<image.map.length;k++){
-			view.drawPixel({
-				x: (image.origin.x + image.map[k].x)*view.scale - view.topLeft.x,
-				y: (image.origin.y + image.map[k].y)*view.scale - view.topLeft.y,
-				colour: image.map[k].colour});
+		for (var k=0;k<image.map.length;k++){
+			view.drawPixel(image.map[k]);
+		}
+	}
+	// Draw pixels from buffer.
+	if (image.buffer){
+		for (var m=0;m<image.buffer.length;m++){
+			view.drawPixel(image.buffer[m]);
 		}
 	}
 };
@@ -159,143 +316,116 @@ view.drawLine = function(start,end,colour){
 	view.ctx.closePath();
 	view.ctx.stroke();
 };
-view.drawClick = function(event){
 
-	// Coordinates of click.
-	var click = {
-		x: event.offsetX - view.movementOffset.x, 
-		y: event.offsetY - view.movementOffset.y
+view.draw = function(event){
+	// Round down, then multiply back up to find the screen coordinates of the box.
+	var clickBox = {
+		"x": 
+			Math.floor(
+				(event.pageX - view.movementOffset.x)/view.scale
+			) * view.scale 
+			- view.topLeft.x,
+		"y": 
+			Math.floor(
+				(event.pageY - view.movementOffset.y)/view.scale
+			) * view.scale 
+			- view.topLeft.y
 	};
-	// Top left corner of pixel square.
-	var pix = {
-		x: Math.floor(click.x/view.scale)*view.scale - view.topLeft.x,
-		y: Math.floor(click.y/view.scale)*view.scale - view.topLeft.y
-	};
-	var coord;
 
-	// If no pixels have been drawn, the origin becomes
-	// x: nth pixel from left
-	// y: mth pixel from top
-	if (!image.map[0]){
-		image.origin.x = Math.floor(pix.x/view.scale);
-		image.origin.y = Math.floor(pix.y/view.scale);
+	// If no pixels have been drawn, the origin becomes the location of this box,
+	// relative to the rest of the boxes on the screen.
+	if (!image.origin.x){
+		image.origin = {
+			"x": Math.floor(clickBox.x/view.scale),
+			"y": Math.floor(clickBox.y/view.scale)
+		};
 	}
 	
-	// After origin is found, we can find out what coord the
-	// new pixel has.
-	coord = {
-		x: Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-		y: Math.floor((click.y-(image.origin.y*view.scale))/view.scale),
-		exists: false
+	// After origin is found, we can find out what coord the pixel has.
+	var pixel = {
+		"x": 
+			Math.floor(
+				(
+					(event.pageX - view.movementOffset.x) 
+					- (image.origin.x * view.scale)
+				) / view.scale
+			),
+		"y": 
+			Math.floor(
+				(
+					(event.pageY - view.movementOffset.y) 
+					- (image.origin.y * view.scale)
+				) / view.scale
+			)
 	};
 
 	// We have two drawing colours depending on mouse button.
-	if (mouse.button === 1){
-		pix.colour = view.palette.foreColour;
-	} else if (mouse.button === 3){
-		pix.colour = view.palette.backColour;
-	}
-
-	// Find out whether the pixel exists already.  We don't want
-	// to have multiple of the same pixel when it is clicked again.
-	for (i=0;i<image.map.length;i++){
-		if (image.map[i].x == coord.x && image.map[i].y == coord.y){				
-			coord.exists = true;
-			view.clearPixel(pix);
-			image.map[i].colour = aOverB(pix.colour,image.map[i].colour);
-			view.drawPixel({
-				x: pix.x,
-				y: pix.y,
-				colour: image.map[i].colour});
-			break;
+	if (view.mode === "draw"){
+		if (mouse.button === 1){
+			pixel.colour = view.palette.foreColour;
+		} else if (mouse.button === 3){
+			pixel.colour = view.palette.backColour;
 		}
+	} else if (view.mode === "erase"){
+		pixel.colour = false;
 	}
 	
-	// If it doesn't exist, create a new one!
-	if (coord.exists == false){
-		image.map.push({x: coord.x, y: coord.y, colour: pix.colour});
-		if (image.topLeft.x > coord.x) image.topLeft.x = coord.x;
-		if (image.topLeft.y > coord.y) image.topLeft.y = coord.y;
-		if (image.bottomRight.x < coord.x) image.bottomRight.x = coord.x;
-		if (image.bottomRight.y < coord.y) image.bottomRight.y = coord.y;
-		view.drawPixel(pix);
-	}
-}	
+	// Add the pixel to the buffer, then draw it.
+	image.addPixelToBuffer({"x": pixel.x, "y": pixel.y, "colour": pixel.colour});
+	view.drawPixel(pixel);
+}
 
 view.move = function(event){
-	if (mouse.moving == "grid"){
+	if (mouse.moving === "grid"){
 		// Move the view!
 		view.movementOffset.x += event.clientX - mouse.position.x;
 		view.movementOffset.y += event.clientY - mouse.position.y;
-		view.draw();
+		view.redraw();
 		
 		mouse.position = {x: event.clientX, y: event.clientY};
 	}
 }
-view.erase = function(event){
-	// Coordinates of click.
-	var click = {
-		x: event.clientX - view.movementOffset.x, 
-		y: event.clientY - view.movementOffset.y
-	};
-	// Top left corner of pixel square.
-	var pix = {	x: Math.floor(click.x/view.scale)*view.scale,
-				y: Math.floor(click.y/view.scale)*view.scale};
-	coord = {
-		x: Math.floor((click.x-(image.origin.x*view.scale))/view.scale),
-		y: Math.floor((click.y-(image.origin.y*view.scale))/view.scale)
-	};
-	
+view.drawPixel = function(pixel){
+	if (pixel.colour === false){
+		view.clearPixel(pixel);
+	} else {
+		view.ctx.fillStyle = pixel.colour;
+		var grid = 1;
+		if (view.grid == false) grid = 0;
+		view.ctx.fillRect(
+			(image.origin.x + pixel.x)*view.scale - view.topLeft.x  + view.movementOffset.x,
+			(image.origin.y + pixel.y)*view.scale - view.topLeft.y + view.movementOffset.y,
+			view.scale-grid, view.scale-grid
+		);
+	}
+}
+view.clearPixel = function(pixel){
+	var grid = 1
+	if (view.grid == false) grid = 0;
+	view.ctx.clearRect(
+		(image.origin.x + pixel.x)*view.scale - view.topLeft.x  + view.movementOffset.x,
+		(image.origin.y + pixel.y)*view.scale - view.topLeft.y + view.movementOffset.y,
+		view.scale-grid, view.scale-grid
+	);
+}
+view.share = function(){
+
+
 	// Reset the corner finder, as we are about to re-search for corners.
 	image.topLeft = {x: 1, y: 1};
 	image.bottomRight = {x: 0, y: 0};
-		
-	
-	for (i=0;i<image.map.length;i++){
-		if (image.map[i].x == coord.x && image.map[i].y == coord.y){
-			image.map.splice(i,1);	
-			view.clearPixel(pix);
-		} else {
-			if (image.topLeft.x > image.map[i].x) image.topLeft.x = image.map[i].x;
-			if (image.topLeft.y > image.map[i].y) image.topLeft.y = image.map[i].y;
-			if (image.bottomRight.x < image.map[i].x) image.bottomRight.x = image.map[i].x;
-			if (image.bottomRight.y < image.map[i].y) image.bottomRight.y = image.map[i].y;
-		}
+	for (var i=0;i<image.map.length;i++){
+		if (image.topLeft.x > image.map[i].x) image.topLeft.x = image.map[i].x;
+		if (image.topLeft.y > image.map[i].y) image.topLeft.y = image.map[i].y;
+		if (image.bottomRight.x < image.map[i].x) image.bottomRight.x = image.map[i].x;
+		if (image.bottomRight.y < image.map[i].y) image.bottomRight.y = image.map[i].y;
 	}
-}
-
-view.undo = function(){
- newgrid = oldgrid
- draw
-}
-
-view.drawPixel = function(pix){
-	view.ctx.fillStyle = pix.colour;
-	var grid = 1;
-	// Draw pixel inside the grid bounds (1 pixel inside).
-	if (view.grid == false) grid = 0;
-	view.ctx.fillRect(
-		pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, 
-		view.scale-grid, view.scale-grid
-	);
-}	
-view.clearPixel = function(pix){
-	var offset = 1
-	if (view.grid == false) offset = 0;
-	// Erase pixel, not grid.
-	view.ctx.clearRect(
-		pix.x + view.movementOffset.x, pix.y + view.movementOffset.y, 
-		view.scale-offset, view.scale-offset
-	);
-}
-
-view.share = function(){
+	
 	var size = {
 		x: image.bottomRight.x - image.topLeft.x + 1,
 		y: image.bottomRight.y - image.topLeft.y + 1
 	};
 	if (view.sharing){
-		//console.log((image.origin.x + image.topLeft.x) * view.scale);
 		view.canvas.width = size.x*view.scale;
 		view.canvas.height = size.y*view.scale;
 		$('#pixdraw').css({
@@ -316,9 +446,10 @@ view.share = function(){
 		});
 		view.topLeft = {x:0,y:0};
 	}
-	view.draw();
-	if (view.sharing)
+	view.redraw();
+	if (view.sharing){
 		share.upload(view.canvas.toDataURL('image/png').split(',')[1]);
+	}
 }
 
 share = {
@@ -338,14 +469,13 @@ share = {
         dataType: 'json'
     }).success(function(data) {
     	console.log(data);
-        //console.log(data['upload']['links']['imgur_page']);
     }).error(function(data) {
         console.log(data);
     });
 	}
 }
 
-view.draw();
+view.redraw();
 
 
 // This enables you to draw in the background colour without the 
@@ -371,28 +501,40 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 
 
 // Mousedown bindings.
-$('#share').mousedown(function(){
-	view.sharing = !view.sharing; 
-	view.share();
+
+// Disable share for now, it doesn't work.
+//$('#share').mousedown(function(){
+//	view.sharing = !view.sharing; 
+//	view.share();
 	
 });
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
-$('#toggle-grid').mousedown(function(){view.grid = !view.grid; view.draw();});
+$('#toggle-grid').mousedown(function(){view.grid = !view.grid; view.redraw();});
+
 $('#pixdraw').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
-	//console.log(mouse.position.x, mouse.position.y);
 	mouse.down = true;
 	mouse.button = event.which;
 	mouse.moving = "grid";
+	
+	if (view.mode === "move"){
+		view.move(event);
+	} else if (view.mode === "draw" || view.mode === "erase"){	
+		view.draw(event);
+	}
+	/*
 	if (view.mode == "draw"){
+		image.state++;
 		view.drawClick(event);
 	} else if (view.mode == "move"){
 		view.move(event);
 	} else if (view.mode == "erase"){
+		image.state++;
 		view.erase(event);
 	};
+	*/
 });
 $('#palette').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
@@ -402,22 +544,42 @@ $('#palette').mousedown(function(event){
 	}
 	
 });
+$('#undo').mousedown(function(event){
+	if (image.state >= 0) {
+		image.undo();
+		image.state--;
+	}
+});
+
+$('#redo').mousedown(function(event){
+	if (image.state < image.stateLog.length-1){
+		image.state++;
+		image.redo();
+	}
+});
 
 // Mouseup bindings.
 $('#pixdraw').mouseup(function(){
 	mouse.down = false;
 	mouse.button = false;
 	mouse.moving = false;
+	if (view.mode === "draw" || view.mode === "erase"){
+		image.stateLog = image.stateLog.slice(0, image.state+1);
+		image.state++;
+		image.addBufferToMap();
+	}
+	
 });
 $('#palette').mouseup(function(){
 	mouse.down = false;	
 	mouse.moving = false;
+	
 });
 
 // Mousemove binding.
 $(window).mousemove(function(event){
 
-	if (mouse.down){
+	if (mouse.down === true){
 	
 
 		if (view.mode === "move"){
@@ -435,17 +597,10 @@ $(window).mousemove(function(event){
 		}
 		
 		
-		if (view.mode === "draw"){
+		if (view.mode === "draw" || view.mode === "erase"){
 			if (mouse.moving === "grid"){
-				view.drawClick(event);
+				view.draw(event);
 				mouse.position = {x: event.clientX, y: event.clientY};
-			}
-		}
-		
-		
-		if (view.mode == "erase"){
-			if (mouse.moving === "grid"){
-				view.erase(event);
 			}
 		}
 	
@@ -463,7 +618,7 @@ $("#pixdraw").bind('mousewheel', function(event, delta) {
 	}
 
 	view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
-	view.draw();
+	view.redraw();
 });
 
 // Resize binding.
@@ -472,5 +627,5 @@ $(window).resize(function(){
 	view.height = $(window).height();
 	view.canvas.width = view.width-1;
 	view.canvas.height = view.height-5;
-	view.draw();
+	view.redraw();
 });
