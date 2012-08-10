@@ -233,7 +233,7 @@ var view = {
 		x: 0,
 		y: 0
 	},	
-	palette: {
+	toolbar: {
 		x: 49,
 		y: 49,
 		backColour: "rgba(0,0,0,0.2)",
@@ -252,14 +252,14 @@ view.canvas.height = view.height-5;
 view.ctx = view.canvas.getContext('2d');
 view.ctx.strokeStyle = "#888888";
 
-// Set the size of the palette element.  Again, literally.
-view.palette.elem = document.getElementById('palette');
-view.palette.elem.width = 61;
-view.palette.elem.height = 401;
+// Set the size of the toolbar element.  Again, literally.
+view.toolbar.elem = document.getElementById('toolbar');
+view.toolbar.elem.width = 61;
+view.toolbar.elem.height = 401;
 
-// Set the location of the palette element... literally.  Like on the page.
-$(view.palette.elem).css('top', view.palette.x);
-$(view.palette.elem).css('left', view.palette.y);
+// Set the location of the toolbar element... literally.  Like on the page.
+$(view.toolbar.elem).css('top', view.toolbar.x);
+$(view.toolbar.elem).css('left', view.toolbar.y);
 
 view.redraw = function(){	
 	view.ctx.clearRect(0,0,view.width, view.height);
@@ -362,9 +362,9 @@ view.draw = function(event){
 	// We have two drawing colours depending on mouse button.
 	if (view.mode === "draw"){
 		if (mouse.button === 1){
-			pixel.colour = view.palette.foreColour;
+			pixel.colour = view.toolbar.foreColour;
 		} else if (mouse.button === 3){
-			pixel.colour = view.palette.backColour;
+			pixel.colour = view.toolbar.backColour;
 		}
 	} else if (view.mode === "erase"){
 		pixel.colour = false;
@@ -410,7 +410,6 @@ view.clearPixel = function(pixel){
 }
 view.share = function(){
 
-
 	// Reset the corner finder, as we are about to re-search for corners.
 	image.topLeft = {x: 1, y: 1};
 	image.bottomRight = {x: 0, y: 0};
@@ -421,11 +420,14 @@ view.share = function(){
 		if (image.bottomRight.y < image.map[i].y) image.bottomRight.y = image.map[i].y;
 	}
 	
+	// Find the size of the image so we can crop to it.
 	var size = {
 		x: image.bottomRight.x - image.topLeft.x + 1,
 		y: image.bottomRight.y - image.topLeft.y + 1
 	};
 	if (view.sharing){
+		$('body').append('<div id="dimmer"></div>');
+		$('div#dimmer').css({'width': view.width, 'height': view.height});
 		view.canvas.width = size.x*view.scale;
 		view.canvas.height = size.y*view.scale;
 		$('#pixdraw').css({
@@ -438,18 +440,22 @@ view.share = function(){
 			y: (image.origin.y+ image.topLeft.y) * view.scale
 		};
 	} else {
-		view.canvas.width = view.width;
-		view.canvas.height = view.height;
+		view.width = $(window).width();
+		view.height = $(window).height();
+		view.canvas.width = view.width-1;
+		view.canvas.height = view.height-5;
+		view.redraw();
 		$('#pixdraw').css({
 			'top':0,'left':0,
 			'position':'absolute','border':0
 		});
 		view.topLeft = {x:0,y:0};
+		$('div#dimmer').remove();
 	}
 	view.redraw();
-	if (view.sharing){
+	/*if (view.sharing){
 		share.upload(view.canvas.toDataURL('image/png').split(',')[1]);
-	}
+	}*/
 }
 
 share = {
@@ -485,16 +491,16 @@ $("#pixdraw").bind("contextmenu", function(e) {
 });
 
 // Colour picker!
-$('#fore').css({'background-color': view.palette.foreColour});
-$('#back').css({'background-color': view.palette.backColour});
+$('#fore').css({'background-color': view.toolbar.foreColour});
+$('#back').css({'background-color': view.toolbar.backColour});
 
 $('#fore').colorpicker({format: 'rgba'}).on('changeColor', function(event){
-	view.palette.foreColour = objToRGBA(event.color.toRGB());
+	view.toolbar.foreColour = objToRGBA(event.color.toRGB());
 	$('#fore').css({'background-color': objToRGBA(event.color.toRGB())});
 });
 
 $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
-	view.palette.backColour = objToRGBA(event.color.toRGB());
+	view.toolbar.backColour = objToRGBA(event.color.toRGB());
 	$('#back').css({'background-color': objToRGBA(event.color.toRGB())});
 });
 
@@ -502,12 +508,11 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 
 // Mousedown bindings.
 
-// Disable share for now, it doesn't work.
-//$('#share').mousedown(function(){
-//	view.sharing = !view.sharing; 
-//	view.share();
-	
-//});
+$('#share').mousedown(function(){
+	view.sharing = !view.sharing; 
+	view.share();
+});
+
 $('#mover').mousedown(function(){view.mode = "move";});
 $('#drawer').mousedown(function(){view.mode = "draw";});
 $('#eraser').mousedown(function(){view.mode = "erase";});
@@ -536,11 +541,11 @@ $('#pixdraw').mousedown(function(event){
 	};
 	*/
 });
-$('#palette').mousedown(function(event){
+$('#toolbar').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
 	if (view.mode == "move"){
-		mouse.moving = "palette";
+		mouse.moving = "toolbar";
 	}
 	
 });
@@ -570,7 +575,7 @@ $('#pixdraw').mouseup(function(){
 	}
 	
 });
-$('#palette').mouseup(function(){
+$('#toolbar').mouseup(function(){
 	mouse.down = false;	
 	mouse.moving = false;
 	
@@ -583,13 +588,13 @@ $(window).mousemove(function(event){
 	
 
 		if (view.mode === "move"){
-			if (mouse.moving === "palette"){
-				view.palette.x+= event.clientX - mouse.position.x;
-				view.palette.y+= event.clientY - mouse.position.y;
+			if (mouse.moving === "toolbar"){
+				view.toolbar.x+= event.clientX - mouse.position.x;
+				view.toolbar.y+= event.clientY - mouse.position.y;
 			
 				mouse.position = {x: event.clientX, y: event.clientY};
 			
-				$('#palette').css({'top': view.palette.y, 'left': view.palette.x});
+				$('#toolbar').css({'top': view.toolbar.y, 'left': view.toolbar.x});
 			}
 			if (mouse.moving === "grid"){	
 				view.move(event);
@@ -611,21 +616,25 @@ $(window).mousemove(function(event){
 // Mousewheel binding.
 $("#pixdraw").bind('mousewheel', function(event, delta) {
 // Determine which way the mouse wheel spun, and scale the page.
-	if (delta > 0){
-		if (view.scale<100) view.scale++;
-	} else if (delta < 0){
-		if (view.scale>1) view.scale--;
-	}
+	if (!view.sharing){
+		if (delta > 0){
+			if (view.scale<100) view.scale++;
+		} else if (delta < 0){
+			if (view.scale>1) view.scale--;
+		}
 
-	view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
-	view.redraw();
+		view.ctx.clearRect(0,0,view.canvas.width,view.canvas.height);
+		view.redraw();
+	}
 });
 
 // Resize binding.
 $(window).resize(function(){
-	view.width = $(window).width();
-	view.height = $(window).height();
-	view.canvas.width = view.width-1;
-	view.canvas.height = view.height-5;
-	view.redraw();
+	if (!view.sharing){
+		view.width = $(window).width();
+		view.height = $(window).height();
+		view.canvas.width = view.width-1;
+		view.canvas.height = view.height-5;
+		view.redraw();
+	}
 });
