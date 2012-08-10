@@ -410,6 +410,7 @@ view.clearPixel = function(pixel){
 }
 view.share = function(){
 
+	view.sharing = !view.sharing;
 	// Reset the corner finder, as we are about to re-search for corners.
 	image.topLeft = {x: 1, y: 1};
 	image.bottomRight = {x: 0, y: 0};
@@ -425,8 +426,19 @@ view.share = function(){
 		x: image.bottomRight.x - image.topLeft.x + 1,
 		y: image.bottomRight.y - image.topLeft.y + 1
 	};
+	
 	if (view.sharing){
-		$('body').append('<div id="dimmer"></div>');
+		$('body').append(
+		
+			'<div id="dimmer">' +
+				'<button id="close">x</button>' +
+			'</div>'
+			
+		);
+		$("#dimmer").children("#close").on('click', function(){
+			view.unshare();
+			$("#dimmer").children("#close").off('click');
+		});
 		$('div#dimmer').css({'width': view.width, 'height': view.height});
 		view.canvas.width = size.x*view.scale;
 		view.canvas.height = size.y*view.scale;
@@ -440,22 +452,27 @@ view.share = function(){
 			y: (image.origin.y+ image.topLeft.y) * view.scale
 		};
 	} else {
-		view.width = $(window).width();
-		view.height = $(window).height();
-		view.canvas.width = view.width-1;
-		view.canvas.height = view.height-5;
-		view.redraw();
-		$('#pixdraw').css({
-			'top':0,'left':0,
-			'position':'absolute','border':0
-		});
-		view.topLeft = {x:0,y:0};
-		$('div#dimmer').remove();
+		view.unshare();
 	}
 	view.redraw();
 	/*if (view.sharing){
 		share.upload(view.canvas.toDataURL('image/png').split(',')[1]);
 	}*/
+}
+
+view.unshare = function(){
+	view.sharing = !view.sharing;
+	view.width = $(window).width();
+	view.height = $(window).height();
+	view.canvas.width = view.width-1;
+	view.canvas.height = view.height-5;
+	view.redraw();
+	$('#pixdraw').css({
+		'top':0,'left':0,
+		'position':'absolute','border':0
+	});
+	view.topLeft = {x:0,y:0};
+	$('div#dimmer').remove();
 }
 
 share = {
@@ -467,7 +484,7 @@ share = {
         data: {
         	type: 'image/png;base64',
             key: '24d00bbfcd3d433095c97d48a4b10ebd',
-            name: 'neon.jpg',
+            name: '',
             title: 'test title',
             caption: 'test caption',
             'image': image
@@ -509,7 +526,6 @@ $('#back').colorpicker({format: 'rgba'}).on('changeColor', function(event){
 // Mousedown bindings.
 
 $('#share').mousedown(function(){
-	view.sharing = !view.sharing; 
 	view.share();
 });
 
@@ -541,6 +557,10 @@ $('#pixdraw').mousedown(function(event){
 	};
 	*/
 });
+$('#toolbar').children().mousedown(function(event){
+	event.stopPropagation();
+});
+
 $('#toolbar').mousedown(function(event){
 	mouse.position = {x: event.clientX, y: event.clientY};
 	mouse.down = true;
